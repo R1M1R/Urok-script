@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#2563EB" />
+  <title>ПайтонЛаб 7 — курс Python</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <script>
+    window.COURSE_CHAPTERS = window.COURSE_CHAPTERS || [];
+  </script>
+  <script defer src="vendor/skulpt.min.js" onerror="this.onerror=null;this.src='https://cdn.jsdelivr.net/npm/skulpt@1.2.0/dist/skulpt.min.js'"></script>
+  <script defer src="vendor/skulpt-stdlib.js" onerror="this.onerror=null;this.src='https://cdn.jsdelivr.net/npm/skulpt@1.2.0/dist/skulpt-stdlib.js'"></script>
+  <script defer src="data/ch1_scripts.js"></script>
+  <script defer src="data/ch2_input.js"></script>
+  <script defer src="data/ch3_types.js"></script>
+  <script defer src="data/ch4_math.js"></script>
+  <script defer src="data/ch5_if.js"></script>
+  <script defer src="data/ch6_loops.js"></script>
+  <script defer src="data/ch7_final.js"></script>
+  <script defer src="js/engine.js"></script>
+  <script defer src="js/app.js"></script>
+</head>
+<body>
+  <div id="toast" class="toast"></div>
+
+  <div id="loginModal" class="modal-backdrop">
+    <div class="modal-card">
+      <div style="text-align:center; margin-bottom:14px;">
+        <div class="brand-logo" style="width:52px;height:52px;font-size:22px;margin:0 auto 10px;">Py</div>
+        <h2 style="margin:0 0 4px;font-size:21px;font-weight:900;">ПайтонЛаб 7</h2>
+        <p style="margin:0;color:var(--text-muted);font-size:13.5px;">27 уроков • 7 глав • скрипты, ввод и типы данных</p>
+      </div>
+      <div class="input-group">
+        <label for="studentNameInput">Фамилия и имя</label>
+        <input id="studentNameInput" class="text-input" type="text" placeholder="Например: Асанов Тимур" autocomplete="name" />
+      </div>
+      <div class="input-group">
+        <label>Выбери свой класс</label>
+        <div class="class-grid" id="classGrid">
+          <button type="button" class="class-btn" data-cls="7А">7А</button>
+          <button type="button" class="class-btn" data-cls="7Б">7Б</button>
+          <button type="button" class="class-btn" data-cls="7В">7В</button>
+          <button type="button" class="class-btn" data-cls="7Г">7Г</button>
+          <button type="button" class="class-btn" data-cls="7Д">7Д</button>
+          <button type="button" class="class-btn" data-cls="7Е">7Е</button>
+          <button type="button" class="class-btn" data-cls="7Ж">7Ж</button>
+          <button type="button" class="class-btn" data-cls="7И">7И</button>
+          <button type="button" class="class-btn" data-cls="7Л">7Л</button>
+          <button type="button" class="class-btn" data-cls="7Н">7Н</button>
+        </div>
+      </div>
+      <div class="callout info" style="margin-bottom:14px;font-size:12.5px;">
+        Прогресс сохраняется в телефоне. На следующем уроке продолжишь с того же места.
+      </div>
+      <button id="startBtn" class="btn btn-primary btn-full" type="button">Начать программировать</button>
+    </div>
+  </div>
+
+  <div id="teacherModal" class="modal-backdrop hidden">
+    <div class="modal-card">
+      <h2 style="margin:0 0 6px;font-size:20px;">Режим учителя</h2>
+      <p style="margin:0 0 12px;color:var(--text-muted);font-size:13.5px;">Можно открыть все главы на этом телефоне или вернуть замки.</p>
+      <div id="teacherGate">
+        <div class="input-group">
+          <label for="teacherPinInput">PIN</label>
+          <input id="teacherPinInput" class="text-input" type="password" inputmode="numeric" maxlength="8" autocomplete="off" />
+        </div>
+        <p id="teacherPinError" class="pin-error"></p>
+        <button id="teacherPinBtn" class="btn btn-primary btn-full" type="button">Войти</button>
+      </div>
+      <div id="teacherActions" class="teacher-actions" style="display:none;">
+        <button id="teacherUnlockBtn" class="btn btn-success btn-full" type="button">Открыть все главы</button>
+        <button id="teacherLockBtn" class="btn btn-secondary btn-full" type="button">Вернуть замки</button>
+      </div>
+      <button id="teacherCloseBtn" class="btn btn-secondary btn-full" type="button" style="margin-top:8px;">Закрыть</button>
+    </div>
+  </div>
+
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="brand">
+        <button type="button" class="brand-logo" id="brandLogo" aria-label="ПайтонЛаб">Py</button>
+        <div class="brand-text">
+          <div class="brand-title">ПайтонЛаб 7</div>
+          <div class="brand-sub">
+            <span id="engineDot" class="engine-dot"></span>
+            <span id="studentHeaderLabel">Python 3 • готов</span>
+          </div>
+        </div>
+      </div>
+      <div class="xp-pill">⭐ <span id="xpCount">0</span> XP</div>
+    </header>
+
+    <main class="content">
+      <section id="view-home" class="view active">
+        <div class="card hero-card">
+          <div class="hero-title" id="heroGreeting">Привет, программист!</div>
+          <div class="hero-sub">27 уроков в 7 главах: от первого скрипта до циклов. Сейчас можно проходить главы 1–3.</div>
+          <div class="progress-bar-wrap">
+            <div id="overallProgressBar" class="progress-bar-fill" style="width:0%;"></div>
+          </div>
+          <div class="progress-meta">
+            <span id="overallProgressText">Пройдено 0 из 0 шагов</span>
+            <span id="overallProgressPct">0%</span>
+          </div>
+        </div>
+        <div id="chapterTrack" class="chapter-track"></div>
+        <div id="modulesList"></div>
+      </section>
+
+      <section id="view-module" class="view">
+        <div class="module-nav-bar">
+          <button class="back-btn" id="backBtn" type="button">← К главам</button>
+          <div id="activeModuleHeading" style="font-weight:800;font-size:14.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></div>
+        </div>
+        <div class="seg-tabs">
+          <button class="seg-btn active" type="button" data-subtab="theory">Теория</button>
+          <button class="seg-btn" type="button" data-subtab="quiz">Тест</button>
+          <button class="seg-btn" type="button" data-subtab="practice">Задачи</button>
+        </div>
+        <div id="moduleTheoryPane"></div>
+        <div id="moduleQuizPane" style="display:none;"></div>
+        <div id="modulePracticePane" style="display:none;">
+          <div id="taskPills" class="task-pills"></div>
+          <div class="card" id="taskCard">
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:6px;">
+              <span id="taskBadge" class="module-badge" style="margin:0;">Задача</span>
+              <span id="taskStatusBadge" class="pill-status new">Не решена</span>
+            </div>
+            <h3 id="taskTitle" style="margin:0 0 8px;font-size:16.5px;font-weight:800;"></h3>
+            <div id="taskDescription" style="font-size:14px;color:#1e293b;"></div>
+            <div style="margin-top:8px;">
+              <span id="taskTypeBadge" class="type-badge">Код</span>
+            </div>
+            <div style="margin-top:10px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+              <button id="hintBtn" type="button" class="btn btn-hint">Подсказка</button>
+              <button id="resetCodeBtn" type="button" class="btn btn-secondary" style="padding:8px 12px;font-size:13px;">Сбросить</button>
+              <span id="hintCounter" style="font-size:12px;color:var(--text-muted);"></span>
+            </div>
+            <div id="hintBox" class="hint-box"></div>
+
+            <div id="symbolWrap">
+              <div class="symbol-topics" id="practiceSymbolTopics"></div>
+              <div class="symbol-bar" id="practiceSymbolBar"></div>
+            </div>
+
+            <div class="editor-box" id="practiceEditorBlock">
+              <div class="editor-header">
+                <div class="editor-dots">
+                  <span style="background:#ef4444;"></span>
+                  <span style="background:#f59e0b;"></span>
+                  <span style="background:#10b981;"></span>
+                  <span style="margin-left:6px;width:auto;height:auto;border-radius:0;">script.py</span>
+                </div>
+              </div>
+              <div class="editor-body">
+                <div class="line-numbers" id="practiceLineNums">1</div>
+                <textarea id="practiceCode" class="code-textarea" spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" placeholder="# Напиши свой Python-скрипт здесь..."></textarea>
+              </div>
+            </div>
+
+            <div id="practiceAlt"></div>
+
+            <div class="btn-row">
+              <button id="runPracticeBtn" type="button" class="btn btn-secondary" style="flex:0.85;">Запустить</button>
+              <button id="checkPracticeBtn" type="button" class="btn btn-success" style="flex:1.15;">Проверить</button>
+            </div>
+
+            <div class="console-box" id="practiceConsole">
+              <div class="console-label">
+                <span>Консоль Python</span>
+                <span id="practiceConsoleStatus">Ожидание запуска</span>
+              </div>
+              <pre id="practiceConsoleOut" class="console-out" style="color:#64748b;">Нажми «Запустить», чтобы посмотреть, или «Проверить», чтобы сдать.</pre>
+              <div id="practiceConsoleErr" class="console-err" style="display:none;"></div>
+              <div id="practiceInputRow" class="console-input-row">
+                <div id="practiceInputPrompt" class="console-prompt-lbl">Введите значение:</div>
+                <input id="practiceInputField" class="console-input-field" type="text" placeholder="Введи ответ и нажми ОК" />
+                <button id="practiceInputSend" type="button" class="console-input-send">ОК</button>
+              </div>
+            </div>
+
+            <div id="practiceTestResult" class="test-result"></div>
+            <div id="nextTaskWrap" style="display:none;margin-top:10px;">
+              <button type="button" class="btn btn-primary btn-full" id="nextTaskBtn">Следующая задача</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="view-sandbox" class="view">
+        <div class="card">
+          <h3 style="margin:0 0 4px;font-size:17px;font-weight:800;">Песочница Python</h3>
+          <p style="margin:0 0 10px;font-size:13.5px;color:var(--text-muted);">Здесь можно писать свои скрипты и проверять идеи. Оценки за песочницу не ставятся.</p>
+          <div class="example-chips">
+            <button type="button" class="chip-btn" data-preset="hello">Приветствие</button>
+            <button type="button" class="chip-btn" data-preset="calc">Калькулятор</button>
+            <button type="button" class="chip-btn" data-preset="quest">Мини-анкета</button>
+            <button type="button" class="chip-btn" data-preset="clear">Очистить</button>
+          </div>
+          <div class="editor-box">
+            <div class="editor-header">
+              <div class="editor-dots">
+                <span style="background:#ef4444;"></span>
+                <span style="background:#f59e0b;"></span>
+                <span style="background:#10b981;"></span>
+                <span style="margin-left:6px;width:auto;height:auto;border-radius:0;">sandbox.py</span>
+              </div>
+              <span style="font-size:11px;">Свободный режим</span>
+            </div>
+            <div class="symbol-topics" id="sandboxSymbolTopics"></div>
+            <div class="symbol-bar" id="sandboxSymbolBar"></div>
+            <div class="editor-body">
+              <div class="line-numbers" id="sandboxLineNums">1</div>
+              <textarea id="sandboxCode" class="code-textarea" spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" placeholder="# Экспериментируй с Python здесь..."></textarea>
+            </div>
+          </div>
+          <div class="btn-row">
+            <button id="runSandboxBtn" type="button" class="btn btn-primary btn-full">Запустить скрипт</button>
+          </div>
+          <div class="console-box">
+            <div class="console-label">
+              <span>Консоль песочницы</span>
+              <span id="sandboxConsoleStatus">Готов</span>
+            </div>
+            <pre id="sandboxConsoleOut" class="console-out" style="color:#64748b;">Результат выполнения появится здесь...</pre>
+            <div id="sandboxConsoleErr" class="console-err" style="display:none;"></div>
+            <div id="sandboxInputRow" class="console-input-row">
+              <div id="sandboxInputPrompt" class="console-prompt-lbl">Введите значение:</div>
+              <input id="sandboxInputField" class="console-input-field" type="text" placeholder="Введи ответ и нажми ОК" />
+              <button id="sandboxInputSend" type="button" class="console-input-send">ОК</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="view-report" class="view">
+        <div class="cert-card">
+          <div style="font-size:12px;font-weight:800;letter-spacing:1px;color:var(--primary);text-transform:uppercase;">Отчёт ученика • ПайтонЛаб 7</div>
+          <h2 id="repStudentName" style="margin:6px 0 2px;font-size:21px;font-weight:900;">—</h2>
+          <div id="repStudentClass" style="font-size:14px;font-weight:700;color:var(--text-muted);">Класс: —</div>
+          <div id="repGradeCircle" class="grade-circle g2">—</div>
+          <div id="repGradeCaption" style="font-size:13.5px;font-weight:700;color:#334155;">Выполни задания, чтобы получить оценку</div>
+          <div id="repHonestyBadge" class="honesty-badge ok">Самостоятельная работа</div>
+          <div class="stat-grid">
+            <div class="stat-box"><div class="stat-box-lbl">Решено задач</div><div class="stat-box-val" id="repTasksVal">0 / 0</div></div>
+            <div class="stat-box"><div class="stat-box-lbl">Тесты</div><div class="stat-box-val" id="repQuizzesVal">0 / 0</div></div>
+            <div class="stat-box"><div class="stat-box-lbl">Опыт</div><div class="stat-box-val" id="repXpVal">0 XP</div></div>
+            <div class="stat-box"><div class="stat-box-lbl">Подсказок</div><div class="stat-box-val" id="repHintsVal">0</div></div>
+          </div>
+          <div id="repModuleBreakdown" style="text-align:left;background:#fff;border:1px solid var(--border);border-radius:12px;padding:10px 12px;font-size:13px;margin-bottom:14px;"></div>
+          <button type="button" class="btn btn-primary btn-full" id="copyReportBtn">Скопировать отчёт для учителя</button>
+          <button id="sendSheetBtn" type="button" class="btn btn-success btn-full" style="display:none;margin-top:8px;">Отправить в журнал учителя</button>
+          <div class="verify-code" id="repVerifyCode">КОД: —</div>
+          <div style="font-size:11.5px;color:var(--text-muted);margin-top:4px;" id="repTimestamp"></div>
+        </div>
+        <div class="card" style="margin-top:12px;">
+          <div style="font-weight:700;font-size:13.5px;margin-bottom:8px;">Профиль</div>
+          <div class="btn-row" style="margin-top:0;">
+            <button type="button" class="btn btn-secondary" id="changeProfileBtn" style="flex:1;font-size:13px;">Сменить ученика</button>
+            <button type="button" class="btn btn-secondary" id="resetProgressBtn" style="flex:1;font-size:13px;color:var(--danger);">Сбросить прогресс</button>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <nav class="bottom-nav">
+    <div class="bottom-nav-inner">
+      <button class="nav-item active" type="button" data-nav="home"><span class="ico">📚</span><span>Уроки</span></button>
+      <button class="nav-item" type="button" data-nav="module"><span class="ico">⌨️</span><span>Практика</span></button>
+      <button class="nav-item" type="button" data-nav="sandbox"><span class="ico">🧪</span><span>Песочница</span></button>
+      <button class="nav-item" type="button" data-nav="report"><span class="ico">🏆</span><span>Итог</span></button>
+    </div>
+  </nav>
+</body>
+</html>
