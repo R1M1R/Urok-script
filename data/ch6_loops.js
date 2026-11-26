@@ -7,7 +7,7 @@ window.COURSE_CHAPTERS.push({
   lessonCount: 8,
   badge: "Уроки 34–41 • 8 ч.",
   title: "Циклы while и for",
-  desc: "Повторяем команды: for с range, while «пока», счётчики, сумматоры, break и continue.",
+  desc: "for и range, шаг, while, счётчик, break и continue, цикл внутри цикла. Восемь уроков: каждая новая задача — отдельный приём.",
   symbols: "loops",
   comingSoon: false,
   theory: [
@@ -82,7 +82,43 @@ total = <span class="nm">0</span>
     <span class="kw">print</span>(i)</div>
           <p>На экране будет 1, потом 2, потом 4. Тройку пропустили, а на пятёрке цикл закрылся раньше print.</p>
         `,
-      tryCode: "for i in range(1, 6):\n    if i == 3:\n        continue\n    if i == 5:\n        break\n    print(i)"
+      tryCode: "for i in range(1, 6):\n    if i == 3:\n        continue\n    if i == 5:\n        break\n    print(i)",
+      trace: {
+        title: "1, 2, потом пропуск, потом выход",
+        code: "for i in range(1, 6):\n    if i == 3:\n        continue\n    if i == 5:\n        break\n    print(i)"
+      }
+    },
+    {
+      title: "🔢 Шаг range: не каждое число",
+      body: `
+          <p>Третье число в <span class="inline-code">range</span> — это шаг. <span class="inline-code">range(0, 9, 2)</span> даёт 0, 2, 4, 6, 8. Девятка не входит, шаг перепрыгивает через одно число.</p>
+          <div class="code-sample"><span class="kw">for</span> i <span class="kw">in</span> range(<span class="nm">0</span>, <span class="nm">9</span>, <span class="nm">2</span>):
+    <span class="kw">print</span>(i)</div>
+          <div class="callout">Чётные от 2 до n удобно взять так: <span class="inline-code">range(2, n + 1, 2)</span>. Последняя граница по-прежнему не входит, поэтому стоит <span class="inline-code">n + 1</span>.</div>
+        `,
+      tryCode: "for i in range(0, 9, 2):\n    print(i)",
+      trace: {
+        title: "Шаг 2 до девятки, не включая её",
+        code: "for i in range(0, 9, 2):\n    print(i)"
+      }
+    },
+    {
+      title: "🧱 Цикл внутри цикла",
+      body: `
+          <p>Внешний цикл считает ряды. Внутренний на каждом ряду собирает клетки. Внутренний сдвинут ещё на 4 пробела.</p>
+          <p>Два ряда по три звезды: внешний крутится 2 раза, внутренний на каждом ряду — 3 раза. Тело внутреннего цикла выполнится 2 × 3 = 6 раз.</p>
+          <div class="code-sample"><span class="kw">for</span> r <span class="kw">in</span> range(<span class="nm">2</span>):
+    line = <span class="st">""</span>
+    <span class="kw">for</span> c <span class="kw">in</span> range(<span class="nm">3</span>):
+        line = line + <span class="st">"*"</span>
+    <span class="kw">print</span>(line)</div>
+          <div class="callout info">Сначала полностью заканчивается внутренний цикл, и только потом внешний переходит к следующему ряду.</div>
+        `,
+      tryCode: "for r in range(2):\n    line = \"\"\n    for c in range(3):\n        line = line + \"*\"\n    print(line)",
+      trace: {
+        title: "Два ряда по три звезды",
+        code: "for r in range(2):\n    line = \"\"\n    for c in range(3):\n        line = line + \"*\"\n    print(line)"
+      }
     }
   ],
   quizzes: [
@@ -145,6 +181,20 @@ total = <span class="nm">0</span>
       ],
       correct: 0,
       explain: "Числа от 1 до n удобно крутить через for и range. Пароль или ввод до нуля — через while: заранее не знаем, сколько раз спросят."
+    },
+    {
+      id: "m5q5",
+      question: "6. Какие числа выдаст range(2, 11, 3)?",
+      options: ["2, 5, 8", "2, 5, 8, 11", "3, 6, 9", "2, 3, 11"],
+      correct: 0,
+      explain: "Старт 2, шаг 3: 2, потом 5, потом 8. Следующее было бы 11, но граница 11 уже не входит."
+    },
+    {
+      id: "m5q6",
+      question: "7. Сколько раз выполнится print, если внешний цикл range(3), а внутри него ещё range(2) и print?",
+      options: ["6", "3", "2", "5"],
+      correct: 0,
+      explain: "Внешний круг запускает внутренний целиком. 3 раза по 2 печати = 6."
     }
   ],
   tasks: [
@@ -334,6 +384,95 @@ total = <span class="nm">0</span>
         if (!/\bif\b/.test(code)) return "Внутри цикла проверь остаток через if.";
         return null;
       }
+    },
+    {
+      id: "m5t7",
+      type: "code",
+      title: "Чётные шагом",
+      desc: "Вводят целое <span class=\"inline-code\">n</span>. Напечатай чётные числа от 2 до n включительно, каждое на новой строке. Используй <span class=\"inline-code\">range</span> с тремя числами: старт, граница и шаг 2.<br><span style=\"font-size:12.5px;color:#64748b;\">Пример: n = 8 → 2, 4, 6, 8</span>",
+      starter: "n = int(input())\n# range(старт, граница, шаг)\n",
+      hints: [
+        "Шаг 2 стоит третьим. Чтобы n само попало в список, правая граница — n + 1.",
+        "for i in range(2, n + 1, 2):\n    print(i)"
+      ],
+      codeCheck: function (code) {
+        if (!/\bfor\b/.test(code)) return "Чётные перебирает цикл for.";
+        if (!/range\s*\([^)]*,[^)]*,[^)]*\)/.test(code)) {
+          return "Нужен range с тремя числами: откуда, до куда и шаг 2.";
+        }
+        return null;
+      },
+      tests: [
+        { inputs: ["8"], expectedLines: ["2", "4", "6", "8"] },
+        { inputs: ["3"], expectedLines: ["2"] },
+        { inputs: ["2"], expectedLines: ["2"] }
+      ]
+    },
+    {
+      id: "m5t8",
+      type: "code",
+      title: "Пропусти и останови",
+      desc: "Вводят целое <span class=\"inline-code\">n</span>. Печатай числа от 1 до n, но с двумя правилами:<br>• если число делится на 3, пропусти его командой <span class=\"inline-code\">continue</span>;<br>• если число больше 7, останови цикл командой <span class=\"inline-code\">break</span> и это число уже не печатай.<br><span style=\"font-size:12.5px;color:#64748b;\">Пример: n = 10 → 1, 2, 4, 5, 7</span>",
+      starter: "n = int(input())\nfor i in range(1, n + 1):\n    # continue для кратных 3, break если i > 7\n    print(i)\n",
+      hints: [
+        "continue ставь до print, иначе тройка успеет напечататься. break тоже до print: число больше 7 на экран не выходит.",
+        "if i % 3 == 0:\n    continue\nif i > 7:\n    break\nprint(i)"
+      ],
+      codeCheck: function (code) {
+        if (!/\bfor\b/.test(code)) return "Числа от 1 до n перебирай циклом for.";
+        if (!/\bcontinue\b/.test(code)) return "Кратные трём пропускай командой continue.";
+        if (!/\bbreak\b/.test(code)) return "Когда число больше 7, выходи из цикла через break.";
+        return null;
+      },
+      tests: [
+        { inputs: ["10"], expectedLines: ["1", "2", "4", "5", "7"] },
+        { inputs: ["5"], expectedLines: ["1", "2", "4", "5"] },
+        { inputs: ["3"], expectedLines: ["1", "2"] }
+      ]
+    },
+    {
+      id: "m5t9",
+      type: "code",
+      title: "Прямоугольник из звёзд",
+      desc: "Вводят два числа: сколько рядов и сколько звёзд в ряду. Напечатай прямоугольник: каждый ряд — одна строка из символов <strong>*</strong>. Нужны <strong>два</strong> цикла <span class=\"inline-code\">for</span>. Внешний считает ряды, внутренний собирает звёзды ряда.<br><span style=\"font-size:12.5px;color:#64748b;\">Пример: 2 и 3 → две строки ***</span>",
+      starter: "rows = int(input())\ncols = int(input())\n# внешний for — ряды, внутренний for — звёзды\n",
+      hints: [
+        "Заведи пустую строку line = \"\" в начале каждого ряда. Во внутреннем цикле прибавляй \"*\". Когда ряд собран, print(line).",
+        "for r in range(rows):\n    line = \"\"\n    for c in range(cols):\n        line = line + \"*\"\n    print(line)"
+      ],
+      codeCheck: function (code) {
+        if ((code.match(/\bfor\b/g) || []).length < 2) {
+          return "Нужны два цикла: внешний по рядам и внутренний по звёздам.";
+        }
+        return null;
+      },
+      tests: [
+        { inputs: ["2", "3"], expectedLines: ["***", "***"] },
+        { inputs: ["1", "4"], expectedLines: ["****"] },
+        { inputs: ["3", "1"], expectedLines: ["*", "*", "*"] }
+      ]
+    },
+    {
+      id: "m5t10",
+      type: "code",
+      title: "Лестница чисел",
+      desc: "Вводят высоту <span class=\"inline-code\">n</span>. Напечатай лестницу. Первый ряд — только 1. Второй — <strong>1 2</strong>. Третий — <strong>1 2 3</strong>. И так до ряда n. Снова два цикла: внешний выбирает длину ряда, внутренний собирает числа этого ряда через пробел.<br><span style=\"font-size:12.5px;color:#64748b;\">Пример для n = 3: три строки, последняя «1 2 3»</span>",
+      starter: "n = int(input())\n# внешний ряд, внутренний числа 1..длина ряда\n",
+      hints: [
+        "Число в строку переводит str(j). Пробел добавляй только если в ряду уже что-то есть, иначе в начале строки будет лишний пробел.",
+        "for i in range(1, n + 1):\n    row = \"\"\n    for j in range(1, i + 1):\n        if row != \"\":\n            row = row + \" \"\n        row = row + str(j)\n    print(row)"
+      ],
+      codeCheck: function (code) {
+        if ((code.match(/\bfor\b/g) || []).length < 2) {
+          return "Нужны два цикла: один для рядов, второй для чисел внутри ряда.";
+        }
+        return null;
+      },
+      tests: [
+        { inputs: ["3"], expectedLines: ["1", "1 2", "1 2 3"] },
+        { inputs: ["1"], expectedLines: ["1"] },
+        { inputs: ["4"], expectedLines: ["1", "1 2", "1 2 3", "1 2 3 4"] }
+      ]
     }
   ]
 });

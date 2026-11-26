@@ -7,7 +7,7 @@ window.COURSE_CHAPTERS.push({
   lessonCount: 5,
   badge: "Уроки 29–33 • 5 ч.",
   title: "Условия if / elif / else",
-  desc: "Компьютер выбирает ветку: сравнение, двоеточие, отступ в 4 пробела, elif и слова and, or, not.",
+  desc: "Сравнение, if / elif / else, and / or / not и вопрос внутри вопроса. Это пять уроков: от первой развилки до вложенного if.",
   symbols: "cond",
   comingSoon: false,
   theory: [
@@ -102,6 +102,27 @@ window.COURSE_CHAPTERS.push({
           <div class="callout info">Условие <span class="inline-code">age &gt;= 12 and age &lt;= 16</span> срабатывает только на возрастах 12, 13, 14, 15 и 16. 11 — рано, 17 — уже нет.</div>
         `,
       tryCode: "rain = True\numbrella = False\nif rain and not umbrella:\n    print(\"Промокнем\")\nelse:\n    print(\"Сухо\")"
+    },
+    {
+      title: "🎟️ Вопрос внутри вопроса",
+      body: `
+          <p>Иногда ответ на первый вопрос открывает второй. Это <strong>вложенный if</strong>: он стоит внутри ветки и сдвинут ещё на 4 пробела, то есть на 8 от края.</p>
+          <p>Билет: с 12 лет можно самому. С 6 до 11 — только если рядом взрослый. Младше 6 — рано.</p>
+          <div class="code-sample">age = <span class="nm">8</span>
+<span class="kw">if</span> age &gt;= <span class="nm">12</span>:
+    <span class="kw">print</span>(<span class="st">"Можно"</span>)
+<span class="kw">else</span>:
+    <span class="kw">if</span> age &gt;= <span class="nm">6</span>:
+        <span class="kw">print</span>(<span class="st">"Спроси взрослого"</span>)
+    <span class="kw">else</span>:
+        <span class="kw">print</span>(<span class="st">"Рано"</span>)</div>
+          <div class="callout">Внешний if сдвинут на 4 пробела, внутренний — на 8. Забыл второй сдвиг — Python не поймёт, к какому вопросу относится строка.</div>
+        `,
+      tryCode: "age = 8\nif age >= 12:\n    print(\"Можно\")\nelse:\n    if age >= 6:\n        print(\"Спроси взрослого\")\n    else:\n        print(\"Рано\")",
+      trace: {
+        title: "Восемь лет: заходим во внутренний вопрос",
+        code: "age = 8\nif age >= 12:\n    print(\"Можно\")\nelse:\n    if age >= 6:\n        print(\"Спроси взрослого\")\n    else:\n        print(\"Рано\")"
+      }
     }
   ],
   quizzes: [
@@ -152,6 +173,13 @@ window.COURSE_CHAPTERS.push({
       ],
       correct: 0,
       explain: "and требует оба куска сразу: не младше 12 и не старше 16. Попадают 12, 13, 14, 15 и 16."
+    },
+    {
+      id: "m4q4",
+      question: "5. age = 8. Что напечатается?\nif age >= 12:\n    print(\"Можно\")\nelse:\n    if age >= 6:\n        print(\"Спроси взрослого\")\n    else:\n        print(\"Рано\")",
+      options: ["Спроси взрослого", "Можно", "Рано", "Ничего"],
+      correct: 0,
+      explain: "8 не дотягивает до 12, поэтому внешняя ветка «Можно» пропускается. Внутри else второй вопрос 8 >= 6 — да. Печатается «Спроси взрослого». До «Рано» дело не доходит."
     }
   ],
   tasks: [
@@ -325,6 +353,63 @@ window.COURSE_CHAPTERS.push({
         if (!/\bif\b/.test(code) || !/\belse\b/.test(code)) return "Добавь if для скидки и else для полной цены.";
         return null;
       }
+    },
+    {
+      id: "m4t6",
+      type: "code",
+      title: "Билет в кино",
+      desc: "Вводят возраст и слово сопровождающего: <strong>да</strong> или <strong>нет</strong> (маленькими буквами, так приходит проверка).<br>Напечатай одно слово:<br>• <strong>Можно</strong> — если возраст не меньше 12. Сопровождающий тогда не важен.<br>• <strong>С взрослым</strong> — если возраст от 6 до 11 и сопровождающий сказал <strong>да</strong>.<br>• <strong>Нельзя</strong> — во всех остальных случаях.<br>Второй вопрос должен стоять <strong>внутри</strong> ветки и быть сдвинут ещё на 4 пробела. Большие и маленькие буквы в ответе сойдут.",
+      starter: "age = int(input())\nadult = input()\n# внешний if про возраст 12\n# внутри — ещё один if про слово «да»\n",
+      hints: [
+        "Сначала if age >= 12. В else задай второй вопрос: if adult == \"да\", но только для возраста от 6. Этот внутренний if сдвинут на 8 пробелов.",
+        "if age >= 12:\n    print(\"Можно\")\nelif age >= 6:\n    if adult == \"да\":\n        print(\"С взрослым\")\n    else:\n        print(\"Нельзя\")\nelse:\n    print(\"Нельзя\")"
+      ],
+      codeCheck: function (code) {
+        const rows = code.replace(/\r\n/g, "\n").split("\n");
+        const indents = [];
+        rows.forEach(function (row) {
+          const mark = row.match(/^([ \t]*)if\b/);
+          if (!mark) return;
+          indents.push(mark[1].replace(/\t/g, "    ").length);
+        });
+        if (indents.length < 2) return "Нужны два if: общий вопрос и вопрос внутри ветки.";
+        const outer = Math.min.apply(null, indents);
+        if (!indents.some(function (n) { return n >= outer + 4; })) {
+          return "Внутренний if сдвинь на 4 пробела глубже внешнего.";
+        }
+        if (!/да/.test(code)) return "Слово сопровождающего сравнивай с «да».";
+        if (!/\belse\b/.test(code)) return "Добавь ветку else для тех, кому нельзя.";
+        return null;
+      },
+      tests: [
+        { inputs: ["12", "нет"], expectedLines: ["Можно"], ignoreCase: true },
+        { inputs: ["14", "да"], expectedLines: ["Можно"], ignoreCase: true },
+        { inputs: ["8", "да"], expectedLines: ["С взрослым"], ignoreCase: true },
+        { inputs: ["8", "нет"], expectedLines: ["Нельзя"], ignoreCase: true },
+        { inputs: ["5", "да"], expectedLines: ["Нельзя"], ignoreCase: true }
+      ]
+    },
+    {
+      id: "m4t7",
+      type: "code",
+      title: "Три вопроса подряд",
+      desc: "Викторина из трёх ответов, каждый на своей строке ввода.<br>1) Столица Кыргызстана? Верно только <strong>Бишкек</strong>.<br>2) Сколько будет 2 + 2? Верно только <strong>4</strong>.<br>3) Сколько дней в неделе? Верно только <strong>7</strong>.<br>Напечатай две строки: сколько ответов верных (от 0 до 3) и слово — <strong>Отлично</strong>, если все три; <strong>Почти</strong>, если верных 1 или 2; <strong>Ещё раз</strong>, если ни одного. Большие и маленькие буквы в этом слове сойдут.",
+      starter: "score = 0\na = input()\nb = input()\nc = input()\n# три отдельных if, потом слово по сумме\n",
+      hints: [
+        "За каждый точный ответ прибавляй 1 к score. Это три отдельных if, не elif: вопросы не заменяют друг друга.",
+        "if a == \"Бишкек\":\n    score = score + 1\nif b == \"4\":\n    score = score + 1\nif c == \"7\":\n    score = score + 1\nprint(score)\nif score == 3:\n    print(\"Отлично\")\nelif score >= 1:\n    print(\"Почти\")\nelse:\n    print(\"Ещё раз\")"
+      ],
+      codeCheck: function (code) {
+        if (!/Бишкек/.test(code)) return "Первый ответ сравнивай со словом Бишкек.";
+        if ((code.match(/\bif\b/g) || []).length < 3) return "Нужны отдельные if: для ответов и для итогового слова.";
+        if (!/\belse\b/.test(code)) return "Если ни одного верного ответа, нужна ветка else со словами «Ещё раз».";
+        return null;
+      },
+      tests: [
+        { inputs: ["Бишкек", "4", "7"], expectedLines: ["3", "Отлично"], numericMatch: true, ignoreCase: true },
+        { inputs: ["Бишкек", "5", "7"], expectedLines: ["2", "Почти"], numericMatch: true, ignoreCase: true },
+        { inputs: ["Ош", "нет", "восемь"], expectedLines: ["0", "Ещё раз"], numericMatch: true, ignoreCase: true }
+      ]
     }
   ]
 });

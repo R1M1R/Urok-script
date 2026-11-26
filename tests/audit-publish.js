@@ -121,14 +121,22 @@ const SOLUTIONS = {
   m4t2: 'x = int(input())\nif x == 10:\n    print("Десятка")\nelse:\n    print("Другое число")',
   m4t3: 'n = int(input())\nif n % 2 == 0:\n    print("Чётное")\nelse:\n    print("Нечётное")',
   m4t4: 'a = int(input())\nb = int(input())\nif a == b:\n    print("Равны")\nelif a > b:\n    print(a)\nelse:\n    print(b)',
+  m4t6: 'age = int(input())\nadult = input()\nif age >= 12:\n    print("Можно")\nelif age >= 6:\n    if adult == "да":\n        print("С взрослым")\n    else:\n        print("Нельзя")\nelse:\n    print("Нельзя")',
+  m4t7: 'score = 0\na = input()\nb = input()\nc = input()\nif a == "Бишкек":\n    score = score + 1\nif b == "4":\n    score = score + 1\nif c == "7":\n    score = score + 1\nprint(score)\nif score == 3:\n    print("Отлично")\nelif score >= 1:\n    print("Почти")\nelse:\n    print("Ещё раз")',
   m5t2: 'n = int(input())\ns = 0\ni = 1\nwhile i <= n:\n    s = s + i\n    i = i + 1\nprint(s)\nfor i in range(1, n + 1):\n    print(i)',
   m5t3: 'n = int(input())\nfor i in range(1, n + 1):\n    print(i)',
   m5t4: 'n = int(input())\ns = 0\nfor i in range(1, n + 1):\n    s = s + i\nprint(s)',
   m5t5: 'total = 0\nx = int(input())\nwhile x != 0:\n    total = total + x\n    x = int(input())\nprint(total)',
+  m5t7: 'n = int(input())\nfor i in range(2, n + 1, 2):\n    print(i)',
+  m5t8: 'n = int(input())\nfor i in range(1, n + 1):\n    if i % 3 == 0:\n        continue\n    if i > 7:\n        break\n    print(i)',
+  m5t9: 'rows = int(input())\ncols = int(input())\nfor r in range(rows):\n    line = ""\n    for c in range(cols):\n        line = line + "*"\n    print(line)',
+  m5t10: 'n = int(input())\nfor i in range(1, n + 1):\n    row = ""\n    for j in range(1, i + 1):\n        if row != "":\n            row = row + " "\n        row = row + str(j)\n    print(row)',
   m6t0: 'n = int(input())\ns = 0\nfor i in range(n):\n    s = s + int(input())\navg = round(s / n, 1)\nprint(avg)\nif avg >= 4.5:\n    print("Отличник")\nelif avg >= 3.5:\n    print("Хорошист")\nelse:\n    print("Нужно подтянуть")',
   m6t1: 'n = int(input())\nbest = int(input())\nfor i in range(n - 1):\n    x = int(input())\n    if x > best:\n        best = x\nprint(best)',
   m6t2: 'amount = int(input())\npercent = int(input())\nif amount % 100 != 0:\n    print("Ошибка")\nelse:\n    total = amount + amount * percent // 100\n    print(total)\n    print(total // 500)\n    print(total % 500)',
-  m6t4: 'secret = 7\nwhile True:\n    guess = int(input())\n    if guess == secret:\n        print("Угадал")\n        break\n    elif guess < secret:\n        print("Больше")\n    else:\n        print("Меньше")'
+  m6t4: 'secret = 7\nwhile True:\n    guess = int(input())\n    if guess == secret:\n        print("Угадал")\n        break\n    elif guess < secret:\n        print("Больше")\n    else:\n        print("Меньше")',
+  m6t5: 'total = 0\nbig = 0\nprice = int(input())\nwhile price != 0:\n    total = total + price\n    if price >= 100:\n        big = big + 1\n    price = int(input())\nprint(total)\nprint(big)',
+  m6t6: 'n = int(input())\ntotal = 0\nfor i in range(1, n + 1):\n    row = ""\n    for j in range(i):\n        row = row + "*"\n    print(row)\n    total = total + i\nprint(total)'
 };
 
 (function () {

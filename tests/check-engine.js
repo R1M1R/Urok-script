@@ -136,6 +136,20 @@ assert(countDown.steps.some((s) => s.note.indexOf("цикл закончился
 const spin = E.buildTrace("x = 1\nwhile x < 5:\n    print(x)");
 assert(spin.steps.some((s) => s.error && s.error.indexOf("бесконечный") !== -1), "tracer stops infinite while");
 
+const skipped = E.buildTrace("for i in range(1, 6):\n    if i == 3:\n        continue\n    if i == 5:\n        break\n    print(i)");
+assert(skipped.steps[skipped.steps.length - 1].output === "1\n2\n4\n", "break and continue " + JSON.stringify(skipped.steps.map((s) => s.output)));
+assert(skipped.steps.some((s) => s.note.indexOf("continue") !== -1), "continue note");
+assert(skipped.steps.some((s) => s.note.indexOf("break") !== -1), "break note");
+
+const grid = E.buildTrace("for r in range(2):\n    line = \"\"\n    for c in range(3):\n        line = line + \"*\"\n    print(line)");
+assert(grid.steps[grid.steps.length - 1].output === "***\n***\n", "nested stars " + JSON.stringify(grid.steps.map((s) => s.output)));
+
+const stepped = E.buildTrace("for i in range(0, 9, 2):\n    print(i)");
+assert(stepped.steps[stepped.steps.length - 1].output === "0\n2\n4\n6\n8\n", "range step " + JSON.stringify(stepped.steps.map((s) => s.output)));
+
+const outside = E.buildTrace("break");
+assert(outside.steps.some((s) => s.error && s.error.indexOf("вне цикла") !== -1), "break outside loop");
+
 const f = E.preprocessFStrings('print(f"Возраст: {2030 - year}")');
 assert(f.includes("str(2030 - year)"), "f-string preprocess: " + f);
 

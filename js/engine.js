@@ -1009,6 +1009,8 @@ async function executePython(rawCode, { onOutput, onInput, isTestMode }) {
     const env = {};
     let output = "";
     let stopped = false;
+    let flow = null;
+    let loopDepth = 0;
     const steps = [{
       line: -1,
       vars: {},
@@ -1090,17 +1092,27 @@ async function executePython(rawCode, { onOutput, onInput, isTestMode }) {
       if (seq.length >= 41) {
         return fail(start, new Error("TimeLimitError: слишком много кругов для пошагового просмотра"));
       }
-      if (!seq.length) {
-        pushStep(start, "range пустой: последняя граница не входит, кругов нет.");
+      loopDepth += 1;
+      try {
+        if (!seq.length) {
+          pushStep(start, "range пустой: последняя граница не входит, кругов нет.");
+          return skipBody(start + 1, headerIndent);
+        }
+        for (let lap = 0; lap < seq.length && !stopped; lap++) {
+          env[varName] = seq[lap];
+          const border = lap === 0 ? " Последнее число range в круг не входит." : "";
+          pushStep(start, "Круг " + (lap + 1) + " из " + seq.length + ": " + varName + " = " + formatPy(seq[lap]) + "." + border);
+          runFrom(start + 1, headerIndent + 1);
+          if (flow === "break") {
+            flow = null;
+            break;
+          }
+          if (flow === "continue") flow = null;
+        }
         return skipBody(start + 1, headerIndent);
+      } finally {
+        loopDepth -= 1;
       }
-      for (let lap = 0; lap < seq.length && !stopped; lap++) {
-        env[varName] = seq[lap];
-        const border = lap === 0 ? " Последнее число range в круг не входит." : "";
-        pushStep(start, "Круг " + (lap + 1) + " из " + seq.length + ": " + varName + " = " + formatPy(seq[lap]) + "." + border);
-        runFrom(start + 1, headerIndent + 1);
-      }
-      return skipBody(start + 1, headerIndent);
     }
 
     function runWhile(start) {
@@ -1110,25 +1122,35 @@ async function executePython(rawCode, { onOutput, onInput, isTestMode }) {
       if (!match) return fail(start, new Error("SyntaxError: после while нужно условие и двоеточие"));
       const cond = match[1].trim();
       let lap = 0;
-      while (!stopped) {
-        let ok = false;
-        try {
-          ok = truthy(evalExprSync(cond, env, readInput));
-        } catch (err) {
-          return fail(start, err);
+      loopDepth += 1;
+      try {
+        while (!stopped) {
+          let ok = false;
+          try {
+            ok = truthy(evalExprSync(cond, env, readInput));
+          } catch (err) {
+            return fail(start, err);
+          }
+          if (!ok) {
+            pushStep(start, "Проверяем while: " + cond + " → нет, цикл закончился.");
+            return skipBody(start + 1, headerIndent);
+          }
+          lap += 1;
+          if (lap > 30) {
+            return fail(start, new Error("TimeLimitError: бесконечный цикл"));
+          }
+          pushStep(start, "Проверяем while: " + cond + " → да, круг " + lap + ".");
+          runFrom(start + 1, headerIndent + 1);
+          if (flow === "break") {
+            flow = null;
+            return skipBody(start + 1, headerIndent);
+          }
+          if (flow === "continue") flow = null;
         }
-        if (!ok) {
-          pushStep(start, "Проверяем while: " + cond + " → нет, цикл закончился.");
-          return skipBody(start + 1, headerIndent);
-        }
-        lap += 1;
-        if (lap > 30) {
-          return fail(start, new Error("TimeLimitError: бесконечный цикл"));
-        }
-        pushStep(start, "Проверяем while: " + cond + " → да, круг " + lap + ".");
-        runFrom(start + 1, headerIndent + 1);
+        return skipBody(start + 1, headerIndent);
+      } finally {
+        loopDepth -= 1;
       }
-      return skipBody(start + 1, headerIndent);
     }
 
     function runFrom(index, parentIndent) {
@@ -1144,16 +1166,29 @@ async function executePython(rawCode, { onOutput, onInput, isTestMode }) {
         const ind = indentUnits(raw);
         if (ind < parentIndent) return i;
         if (ind > parentIndent) return fail(i, new Error("IndentationError: unexpected indent"));
+        if (clean === "break" || clean === "continue") {
+          if (loopDepth === 0) {
+            return fail(i, new Error(clean + " стоит вне цикла"));
+          }
+          flow = clean;
+          pushStep(i, clean === "break"
+            ? "break: выходим из цикла, оставшиеся круги не делаем."
+            : "continue: этот круг бросаем и сразу идём к следующему.");
+          return i + 1;
+        }
         if (/^if\b/.test(clean)) {
           i = runChain(i);
+          if (flow) return i;
           continue;
         }
         if (/^for\b/.test(clean)) {
           i = runFor(i);
+          if (flow) return i;
           continue;
         }
         if (/^while\b/.test(clean)) {
           i = runWhile(i);
+          if (flow) return i;
           continue;
         }
         if (/^(elif|else)\b/.test(clean)) {
@@ -1224,6 +1259,7 @@ async function executePython(rawCode, { onOutput, onInput, isTestMode }) {
         if (enter) {
           taken = true;
           i = runFrom(i, headerIndent + 1);
+          if (flow) return i;
         } else {
           i = skipBody(i, headerIndent);
         }

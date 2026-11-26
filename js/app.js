@@ -13,15 +13,17 @@
     { label: "int()", insert: "int()", back: 1, groups: ["input", "types", "math", "all"] },
     { label: "float()", insert: "float()", back: 1, groups: ["types", "math", "all"] },
     { label: "math.", insert: "math.", back: 0, groups: ["math", "all"] },
-    { label: "if ", insert: "if ", back: 0, groups: ["cond", "all"] },
+    { label: "if ", insert: "if ", back: 0, groups: ["cond", "loops", "all"] },
     { label: "elif ", insert: "elif ", back: 0, groups: ["cond", "all"] },
-    { label: "else:", insert: "else:", back: 0, groups: ["cond", "all"] },
+    { label: "else:", insert: "else:", back: 0, groups: ["cond", "loops", "all"] },
     { label: "and", insert: " and ", back: 0, groups: ["cond", "all"] },
     { label: "or", insert: " or ", back: 0, groups: ["cond", "all"] },
     { label: "==", insert: " == ", back: 0, groups: ["cond", "all"] },
     { label: "!=", insert: " != ", back: 0, groups: ["cond", "all"] },
     { label: "for i in range():", insert: "for i in range():", back: 2, groups: ["loops", "all"] },
     { label: "while ", insert: "while ", back: 0, groups: ["loops", "all"] },
+    { label: "break", insert: "break", back: 0, groups: ["loops", "all"] },
+    { label: "continue", insert: "continue", back: 0, groups: ["loops", "all"] },
     { label: '""', insert: '""', back: 1, groups: ["print", "input", "types", "all"] },
     { label: "()", insert: "()", back: 1, groups: ["print", "input", "types", "math", "all"] },
     { label: "=", insert: " = ", back: 0, groups: ["print", "input", "types", "all"] },
@@ -30,7 +32,7 @@
     { label: "#", insert: "# ", back: 0, groups: ["print", "all"] },
     { label: ",", insert: ", ", back: 0, groups: ["input", "print", "all"] },
     { label: "//", insert: " // ", back: 0, groups: ["types", "math", "all"] },
-    { label: "%", insert: " % ", back: 0, groups: ["types", "all"] },
+    { label: "%", insert: " % ", back: 0, groups: ["types", "loops", "all"] },
     { label: "**", insert: " ** ", back: 0, groups: ["types", "math", "all"] }
   ];
 

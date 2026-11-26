@@ -7,7 +7,7 @@ window.COURSE_CHAPTERS.push({
   lessonCount: 6,
   badge: "Уроки 42–47 • 6 ч.",
   title: "Итоговый практикум",
-  desc: "Зачёт на всё, что прошли за 27 уроков: ввод, типы, math, условия и циклы.",
+  desc: "Шесть уроков зачёта: среднее и статус, максимум, банкомат, своя сумма, игра, касса смены и лестница из звёзд.",
   symbols: "all",
   comingSoon: false,
   theory: [
@@ -38,6 +38,23 @@ window.COURSE_CHAPTERS.push({
           <div class="callout info">Пример хода: «сначала n, потом n оценок → сложить в цикле → разделить и округлить → if выберет статус». Так устроена первая задача этой главы.</div>
         `,
       tryCode: "n = int(input(\"Сколько чисел? \"))\ns = 0\nfor i in range(n):\n    s = s + int(input())\nprint(\"Сумма:\", s)"
+    },
+    {
+      title: "🌟 Ряд из рядов",
+      body: `
+          <p>Большая задача часто складывается из двух циклов. Внешний решает, сколько рядов. Внутренний собирает один ряд. После всех рядов можно напечатать итог: сколько фигур получилось.</p>
+          <div class="code-sample"><span class="kw">for</span> r <span class="kw">in</span> range(<span class="nm">2</span>):
+    line = <span class="st">""</span>
+    <span class="kw">for</span> c <span class="kw">in</span> range(<span class="nm">2</span>):
+        line = line + <span class="st">"*"</span>
+    <span class="kw">print</span>(line)</div>
+          <div class="callout">На зачёте так же: сначала реши, что повторяется, потом что считается один раз после цикла. Средний балл, максимум, сумма чеков и рисунок устроены одинаково.</div>
+        `,
+      tryCode: "for r in range(2):\n    line = \"\"\n    for c in range(2):\n        line = line + \"*\"\n    print(line)",
+      trace: {
+        title: "Квадрат два на два",
+        code: "for r in range(2):\n    line = \"\"\n    for c in range(2):\n        line = line + \"*\"\n    print(line)"
+      }
     }
   ],
   quizzes: [
@@ -80,6 +97,13 @@ window.COURSE_CHAPTERS.push({
       ],
       correct: 0,
       explain: "Пока x не ноль, круг продолжается. Ноль делает условие ложным, и цикл заканчивается. Ноль в сумму обычно не кладут."
+    },
+    {
+      id: "m6q5",
+      question: "6. Лестница из 4 рядов: в первом 1 звезда, во втором 2, в третьем 3, в четвёртом 4. Сколько звёзд всего?",
+      options: ["10", "4", "8", "16"],
+      correct: 0,
+      explain: "1 + 2 + 3 + 4 = 10. Это сумма ряда, её копят в переменной, пока циклы рисуют строки."
     }
   ],
   tasks: [
@@ -215,6 +239,51 @@ window.COURSE_CHAPTERS.push({
       tests: [
         { inputs: ["3", "9", "7"], expectedLines: ["Больше", "Меньше", "Угадал"], ignoreCase: true },
         { inputs: ["7"], expectedLines: ["Угадал"], ignoreCase: true }
+      ]
+    },
+    {
+      id: "m6t5",
+      type: "code",
+      title: "Касса смены",
+      desc: "Кассир вводит цены, пока не введёт <strong>0</strong>. Ноль — конец смены, в сумму его не клади. Напечатай две строки:<br>1) общая сумма всех цен;<br>2) сколько чеков были не меньше <strong>100</strong>.<br>Сколько цен будет, заранее неизвестно: здесь <span class=\"inline-code\">while</span> и <span class=\"inline-code\">if</span>.<br><span style=\"font-size:12.5px;color:#64748b;\">Пример: 50, 120, 80, 200, 0 → 450 и 2</span>",
+      starter: "total = 0\nbig = 0\n# читай цену, пока не 0\n",
+      hints: [
+        "Прочитай цену до цикла. Пока она не 0, прибавляй её к total. Если цена >= 100, прибавь 1 к big. Потом прочитай следующую цену.",
+        "price = int(input())\nwhile price != 0:\n    total = total + price\n    if price >= 100:\n        big = big + 1\n    price = int(input())\nprint(total)\nprint(big)"
+      ],
+      codeCheck: function (code) {
+        if (!/\bwhile\b/.test(code)) return "Цен заранее неизвестно — нужен цикл while.";
+        if (!/input\s*\(/.test(code)) return "Каждую цену читай через input().";
+        if (!/\bif\b/.test(code)) return "Дорогие чеки от 100 считай отдельным if.";
+        if (!/(^|\D)100(\D|$)/.test(code)) return "Порог дорогого чека — 100.";
+        return null;
+      },
+      tests: [
+        { inputs: ["50", "120", "80", "200", "0"], expectedLines: ["450", "2"] },
+        { inputs: ["40", "0"], expectedLines: ["40", "0"] },
+        { inputs: ["100", "0"], expectedLines: ["100", "1"] }
+      ]
+    },
+    {
+      id: "m6t6",
+      type: "code",
+      title: "Лестница из звёзд",
+      desc: "Вводят высоту <span class=\"inline-code\">n</span>. Нарисуй лестницу из <strong>*</strong> и в конце напечатай, сколько звёзд ушло всего.<br>Первый ряд — одна звезда, второй — две, и так до n.<br>Нужны два цикла <span class=\"inline-code\">for</span> и переменная-сумма. Ряды печатай по ходу, итог — одной строкой после циклов.<br><span style=\"font-size:12.5px;color:#64748b;\">Пример для n = 3: три строки звёзд, потом число 6</span>",
+      starter: "n = int(input())\ntotal = 0\n# внешний for — ряды, внутренний — звёзды ряда\n",
+      hints: [
+        "На ряду номер i должно быть i звёзд. После печати ряда прибавь i к total. Когда циклы кончились, print(total).",
+        "for i in range(1, n + 1):\n    row = \"\"\n    for j in range(i):\n        row = row + \"*\"\n    print(row)\n    total = total + i\nprint(total)"
+      ],
+      codeCheck: function (code) {
+        if ((code.match(/\bfor\b/g) || []).length < 2) {
+          return "Нужны два цикла for: ряды и звёзды внутри ряда.";
+        }
+        return null;
+      },
+      tests: [
+        { inputs: ["3"], expectedLines: ["*", "**", "***", "6"] },
+        { inputs: ["1"], expectedLines: ["*", "1"] },
+        { inputs: ["4"], expectedLines: ["*", "**", "***", "****", "10"] }
       ]
     }
   ]
