@@ -1,0 +1,3201 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#2563EB" />
+  <title>ПайтонЛаб 7 — Интерактивный курс Python</title>
+
+  <!-- Skulpt Python 3 in Browser (with graceful offline fallback built in) -->
+  <script src="https://cdn.jsdelivr.net/npm/skulpt@1.2.0/dist/skulpt.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/skulpt@1.2.0/dist/skulpt-stdlib.js" defer></script>
+
+  <style>
+    :root {
+      --bg: #f1f5f9;
+      --surface: #ffffff;
+      --surface-soft: #f8fafc;
+      --border: #e2e8f0;
+      --text: #0f172a;
+      --text-muted: #64748b;
+      --primary: #2563eb;
+      --primary-dark: #1d4ed8;
+      --primary-soft: #eff6ff;
+      --accent: #f59e0b;
+      --accent-soft: #fffbeb;
+      --success: #10b981;
+      --success-soft: #ecfdf5;
+      --danger: #ef4444;
+      --danger-soft: #fef2f2;
+      --code-bg: #0f172a;
+      --code-gutter: #1e293b;
+      --code-text: #e2e8f0;
+      --radius: 16px;
+      --radius-sm: 10px;
+      --shadow: 0 4px 16px rgba(15, 23, 42, 0.06);
+      --nav-h: 66px;
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Inter, Arial, sans-serif;
+      font-size: 15px;
+      line-height: 1.5;
+      min-height: 100%;
+    }
+
+    body {
+      padding-bottom: calc(var(--nav-h) + 20px);
+    }
+
+    .app-shell {
+      max-width: 600px;
+      margin: 0 auto;
+      min-height: 100vh;
+    }
+
+    /* Top Header */
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 40;
+      background: rgba(255, 255, 255, 0.92);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      min-width: 0;
+    }
+
+    .brand-logo {
+      width: 36px;
+      height: 36px;
+      border-radius: 11px;
+      background: linear-gradient(135deg, #2563eb 0%, #3b82f6 55%, #f59e0b 100%);
+      color: #fff;
+      font-weight: 800;
+      font-size: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      box-shadow: 0 3px 10px rgba(37, 99, 235, 0.28);
+    }
+
+    .brand-text {
+      min-width: 0;
+    }
+
+    .brand-title {
+      font-weight: 800;
+      font-size: 15px;
+      line-height: 1.15;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .brand-sub {
+      font-size: 11.5px;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .engine-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--success);
+      display: inline-block;
+    }
+
+    .engine-dot.offline {
+      background: var(--accent);
+    }
+
+    .xp-pill {
+      background: var(--accent-soft);
+      border: 1px solid #fde68a;
+      color: #92400e;
+      font-weight: 700;
+      font-size: 13px;
+      padding: 5px 10px;
+      border-radius: 999px;
+      white-space: nowrap;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    /* Main Content Area */
+    .content {
+      padding: 14px;
+    }
+
+    .view {
+      display: none;
+      animation: fadeIn 0.18s ease-out;
+    }
+
+    .view.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Cards & Typography */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      margin-bottom: 12px;
+      box-shadow: var(--shadow);
+    }
+
+    .hero-card {
+      background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 70%, #0ea5e9 100%);
+      color: #fff;
+      border: none;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero-card::after {
+      content: "{py}";
+      position: absolute;
+      right: 12px;
+      bottom: -10px;
+      font-family: ui-monospace, monospace;
+      font-size: 64px;
+      font-weight: 900;
+      opacity: 0.12;
+      pointer-events: none;
+    }
+
+    .hero-title {
+      font-size: 18px;
+      font-weight: 800;
+      margin: 0 0 4px;
+    }
+
+    .hero-sub {
+      font-size: 13.5px;
+      opacity: 0.92;
+      margin: 0 0 12px;
+    }
+
+    .progress-bar-wrap {
+      background: rgba(255, 255, 255, 0.22);
+      border-radius: 999px;
+      height: 10px;
+      overflow: hidden;
+      margin-bottom: 6px;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      background: #fbbf24;
+      border-radius: 999px;
+      transition: width 0.35s ease;
+    }
+
+    .progress-meta {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      opacity: 0.95;
+      font-weight: 600;
+    }
+
+    /* Module List Cards */
+    .module-card {
+      cursor: pointer;
+      transition: transform 0.12s ease, border-color 0.15s ease;
+      position: relative;
+    }
+
+    .module-card:active {
+      transform: scale(0.985);
+    }
+
+    .module-card.completed {
+      border-color: #a7f3d0;
+    }
+
+    .module-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+
+    .module-badge {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      padding: 3px 8px;
+      border-radius: 999px;
+      background: var(--primary-soft);
+      color: var(--primary);
+      margin-bottom: 5px;
+    }
+
+    .module-badge.bonus {
+      background: #f3e8ff;
+      color: #7c3aed;
+    }
+
+    .module-title {
+      font-size: 16.5px;
+      font-weight: 800;
+      margin: 0 0 4px;
+      line-height: 1.25;
+    }
+
+    .module-desc {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin: 0 0 10px;
+    }
+
+    .module-stats {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      font-size: 12.5px;
+      color: var(--text-muted);
+      padding-top: 10px;
+      border-top: 1px solid var(--border);
+    }
+
+    .pill-status {
+      font-weight: 700;
+      padding: 3px 9px;
+      border-radius: 999px;
+      font-size: 12px;
+    }
+
+    .pill-status.done {
+      background: var(--success-soft);
+      color: #047857;
+    }
+
+    .pill-status.inprog {
+      background: var(--primary-soft);
+      color: var(--primary);
+    }
+
+    .pill-status.new {
+      background: #f1f5f9;
+      color: var(--text-muted);
+    }
+
+    /* Sub-tabs inside Module */
+    .module-nav-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .back-btn {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 7px 11px;
+      font-weight: 700;
+      font-size: 13.5px;
+      color: var(--text);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .seg-tabs {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+      background: #e2e8f0;
+      padding: 4px;
+      border-radius: 12px;
+      margin-bottom: 14px;
+    }
+
+    .seg-btn {
+      border: none;
+      background: transparent;
+      padding: 8px 6px;
+      border-radius: 9px;
+      font-weight: 700;
+      font-size: 13px;
+      color: #475569;
+      cursor: pointer;
+      transition: all 0.15s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+    }
+
+    .seg-btn.active {
+      background: #fff;
+      color: var(--primary);
+      box-shadow: 0 2px 6px rgba(15, 23, 42, 0.08);
+    }
+
+    /* Theory Cards */
+    .theory-card h3 {
+      margin: 0 0 8px;
+      font-size: 16px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .theory-card p {
+      margin: 0 0 10px;
+      font-size: 14.5px;
+      color: #1e293b;
+    }
+
+    .theory-card ul {
+      margin: 0 0 10px;
+      padding-left: 18px;
+      font-size: 14px;
+    }
+
+    .theory-card li {
+      margin-bottom: 5px;
+    }
+
+    .callout {
+      background: var(--accent-soft);
+      border-left: 4px solid var(--accent);
+      padding: 10px 12px;
+      border-radius: 0 10px 10px 0;
+      font-size: 13.5px;
+      color: #78350f;
+      margin: 10px 0;
+    }
+
+    .callout.info {
+      background: var(--primary-soft);
+      border-left-color: var(--primary);
+      color: #1e3a8a;
+    }
+
+    .code-sample {
+      background: var(--code-bg);
+      color: #e2e8f0;
+      border-radius: 12px;
+      padding: 12px 14px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 13.5px;
+      line-height: 1.55;
+      overflow-x: auto;
+      margin: 10px 0;
+      position: relative;
+      white-space: pre;
+    }
+
+    .code-sample .cm { color: #94a3b8; }
+    .code-sample .kw { color: #60a5fa; font-weight: 700; }
+    .code-sample .st { color: #34d399; }
+    .code-sample .nm { color: #fbbf24; }
+
+    .try-btn {
+      margin-top: 6px;
+      background: #1e293b;
+      color: #93c5fd;
+      border: 1px solid #334155;
+      border-radius: 8px;
+      padding: 6px 11px;
+      font-size: 12.5px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .inline-code {
+      background: #e2e8f0;
+      color: #0f172a;
+      padding: 1px 6px;
+      border-radius: 6px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    /* Quiz Styling */
+    .quiz-q {
+      margin-bottom: 14px;
+    }
+
+    .quiz-q-title {
+      font-weight: 800;
+      font-size: 15px;
+      margin: 0 0 10px;
+    }
+
+    .quiz-opt {
+      width: 100%;
+      text-align: left;
+      background: var(--surface-soft);
+      border: 1.5px solid var(--border);
+      border-radius: 12px;
+      padding: 11px 13px;
+      margin-bottom: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text);
+      cursor: pointer;
+      transition: all 0.14s;
+      display: block;
+    }
+
+    .quiz-opt:active { transform: scale(0.99); }
+    .quiz-opt.correct {
+      background: var(--success-soft);
+      border-color: var(--success);
+      color: #065f46;
+    }
+    .quiz-opt.wrong {
+      background: var(--danger-soft);
+      border-color: var(--danger);
+      color: #991b1b;
+    }
+
+    .quiz-feedback {
+      font-size: 13.5px;
+      padding: 9px 12px;
+      border-radius: 10px;
+      margin-top: 6px;
+      display: none;
+    }
+
+    .quiz-feedback.show { display: block; }
+    .quiz-feedback.ok { background: var(--success-soft); color: #065f46; }
+    .quiz-feedback.err { background: var(--danger-soft); color: #991b1b; }
+
+    /* Practice Task Selector */
+    .task-pills {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 6px;
+      margin-bottom: 10px;
+      scrollbar-width: none;
+    }
+
+    .task-pills::-webkit-scrollbar { display: none; }
+
+    .task-pill {
+      flex: 0 0 auto;
+      padding: 7px 12px;
+      border-radius: 999px;
+      border: 1.5px solid var(--border);
+      background: var(--surface);
+      font-weight: 700;
+      font-size: 13px;
+      color: var(--text-muted);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .task-pill.active {
+      border-color: var(--primary);
+      background: var(--primary-soft);
+      color: var(--primary);
+    }
+
+    .task-pill.solved {
+      border-color: var(--success);
+      background: var(--success-soft);
+      color: #047857;
+    }
+
+    .task-pill.active.solved {
+      box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.25);
+    }
+
+    /* Code Editor Component */
+    .editor-box {
+      background: var(--code-bg);
+      border-radius: 14px;
+      overflow: hidden;
+      border: 1px solid #1e293b;
+      margin-top: 10px;
+      box-shadow: 0 8px 20px rgba(15, 23, 42, 0.14);
+    }
+
+    .editor-header {
+      background: #1e293b;
+      padding: 8px 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 12px;
+      color: #94a3b8;
+      font-family: ui-monospace, monospace;
+    }
+
+    .editor-dots {
+      display: flex;
+      gap: 5px;
+      align-items: center;
+    }
+
+    .editor-dots span {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+    }
+
+    .editor-reset-btn {
+      background: transparent;
+      border: 1px solid #334155;
+      color: #cbd5e1;
+      border-radius: 6px;
+      padding: 3px 8px;
+      font-size: 11.5px;
+      cursor: pointer;
+    }
+
+    /* Smart Mobile Symbol Toolbar */
+    .symbol-bar {
+      background: #162033;
+      border-bottom: 1px solid #26354d;
+      padding: 7px 8px;
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+
+    .symbol-bar::-webkit-scrollbar { display: none; }
+
+    .sym-btn {
+      flex: 0 0 auto;
+      background: #24324a;
+      color: #f8fafc;
+      border: 1px solid #334155;
+      border-radius: 8px;
+      padding: 6px 10px;
+      font-family: ui-monospace, monospace;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .sym-btn:active {
+      background: var(--primary);
+      border-color: var(--primary);
+    }
+
+    .editor-body {
+      display: flex;
+      align-items: stretch;
+      min-height: 155px;
+    }
+
+    .line-numbers {
+      background: #131c31;
+      color: #475569;
+      padding: 12px 8px 12px 10px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 14px;
+      line-height: 1.6;
+      text-align: right;
+      user-select: none;
+      min-width: 32px;
+      white-space: pre;
+    }
+
+    .code-textarea {
+      flex: 1;
+      width: 100%;
+      min-height: 155px;
+      background: transparent;
+      color: #f8fafc;
+      border: none;
+      outline: none;
+      resize: vertical;
+      padding: 12px 12px 12px 8px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 14.5px;
+      line-height: 1.6;
+      tab-size: 4;
+      caret-color: #38bdf8;
+      white-space: pre;
+      overflow-x: auto;
+    }
+
+    /* Action Buttons */
+    .btn-row {
+      display: flex;
+      gap: 8px;
+      margin-top: 10px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      border: none;
+      border-radius: 12px;
+      padding: 11px 14px;
+      font-weight: 700;
+      font-size: 14px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: transform 0.1s, opacity 0.15s;
+    }
+
+    .btn:active { transform: scale(0.97); }
+    .btn:disabled { opacity: 0.55; cursor: not-allowed; }
+
+    .btn-primary {
+      background: var(--primary);
+      color: #fff;
+      flex: 1;
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+    }
+
+    .btn-success {
+      background: var(--success);
+      color: #fff;
+      flex: 1;
+      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
+    }
+
+    .btn-secondary {
+      background: var(--surface);
+      color: var(--text);
+      border: 1.5px solid var(--border);
+    }
+
+    .btn-hint {
+      background: var(--accent-soft);
+      color: #92400e;
+      border: 1px solid #fde68a;
+      padding: 8px 12px;
+      font-size: 13px;
+    }
+
+    .btn-full {
+      width: 100%;
+    }
+
+    /* Console Output */
+    .console-box {
+      background: #020617;
+      color: #e2e8f0;
+      border-radius: 12px;
+      padding: 12px;
+      margin-top: 10px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 13.5px;
+      line-height: 1.55;
+      border: 1px solid #1e293b;
+      min-height: 68px;
+    }
+
+    .console-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      color: #64748b;
+      margin-bottom: 6px;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .console-out {
+      white-space: pre-wrap;
+      word-break: break-word;
+      margin: 0;
+    }
+
+    .console-err {
+      color: #fca5a5;
+      background: rgba(239, 68, 68, 0.14);
+      border-left: 3px solid #ef4444;
+      padding: 8px 10px;
+      border-radius: 6px;
+      margin-top: 6px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-size: 13.5px;
+    }
+
+    /* Interactive In-Console Input Prompt */
+    .console-input-row {
+      display: none;
+      margin-top: 8px;
+      padding-top: 8px;
+      border-top: 1px dashed #334155;
+      gap: 6px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .console-input-row.active {
+      display: flex;
+    }
+
+    .console-prompt-lbl {
+      color: #38bdf8;
+      font-weight: 700;
+      width: 100%;
+      font-size: 13px;
+    }
+
+    .console-input-field {
+      flex: 1;
+      min-width: 150px;
+      background: #0f172a;
+      color: #fff;
+      border: 1.5px solid #38bdf8;
+      border-radius: 8px;
+      padding: 8px 10px;
+      font-family: ui-monospace, monospace;
+      font-size: 14px;
+      outline: none;
+    }
+
+    .console-input-send {
+      background: #38bdf8;
+      color: #0f172a;
+      border: none;
+      border-radius: 8px;
+      padding: 8px 14px;
+      font-weight: 800;
+      font-size: 13.5px;
+      cursor: pointer;
+    }
+
+    /* Test Result Banner */
+    .test-result {
+      margin-top: 10px;
+      padding: 12px 14px;
+      border-radius: 12px;
+      font-size: 13.5px;
+      display: none;
+    }
+
+    .test-result.show { display: block; }
+    .test-result.pass {
+      background: var(--success-soft);
+      border: 1.5px solid #6ee7b7;
+      color: #065f46;
+    }
+    .test-result.fail {
+      background: var(--danger-soft);
+      border: 1.5px solid #fca5a5;
+      color: #991b1b;
+    }
+
+    .hint-box {
+      display: none;
+      margin-top: 8px;
+      background: var(--accent-soft);
+      border: 1px solid #fde68a;
+      color: #78350f;
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-size: 13.5px;
+    }
+
+    .hint-box.show { display: block; }
+
+    /* Certificate / Teacher Report */
+    .cert-card {
+      background: linear-gradient(160deg, #ffffff 0%, #eff6ff 100%);
+      border: 2px solid #93c5fd;
+      border-radius: 20px;
+      padding: 20px 16px;
+      text-align: center;
+      box-shadow: 0 10px 28px rgba(37, 99, 235, 0.12);
+    }
+
+    .grade-circle {
+      width: 76px;
+      height: 76px;
+      border-radius: 50%;
+      margin: 10px auto;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-weight: 900;
+      font-size: 32px;
+      line-height: 1;
+      color: #fff;
+      background: linear-gradient(135deg, #10b981, #059669);
+      box-shadow: 0 6px 18px rgba(16, 185, 129, 0.35);
+    }
+
+    .grade-circle.g4 { background: linear-gradient(135deg, #2563eb, #1d4ed8); box-shadow: 0 6px 18px rgba(37, 99, 235, 0.32); }
+    .grade-circle.g3 { background: linear-gradient(135deg, #f59e0b, #d97706); box-shadow: 0 6px 18px rgba(245, 158, 11, 0.32); }
+    .grade-circle.g2 { background: linear-gradient(135deg, #64748b, #475569); box-shadow: 0 6px 18px rgba(100, 116, 139, 0.25); }
+
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+      margin: 14px 0;
+      text-align: left;
+    }
+
+    .stat-box {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 10px 12px;
+    }
+
+    .stat-box-lbl {
+      font-size: 11.5px;
+      color: var(--text-muted);
+    }
+
+    .stat-box-val {
+      font-size: 16px;
+      font-weight: 800;
+      margin-top: 2px;
+    }
+
+    .honesty-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 5px 11px;
+      border-radius: 999px;
+      font-size: 12.5px;
+      font-weight: 700;
+      margin-top: 6px;
+    }
+
+    .honesty-badge.ok { background: var(--success-soft); color: #047857; }
+    .honesty-badge.warn { background: var(--accent-soft); color: #92400e; }
+    .honesty-badge.alert { background: var(--danger-soft); color: #991b1b; }
+
+    .verify-code {
+      font-family: ui-monospace, monospace;
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 10px;
+      letter-spacing: 0.8px;
+    }
+
+    /* Bottom Navigation */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      z-index: 50;
+      background: rgba(255, 255, 255, 0.96);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-top: 1px solid var(--border);
+      height: var(--nav-h);
+      display: flex;
+      justify-content: center;
+    }
+
+    .bottom-nav-inner {
+      width: 100%;
+      max-width: 600px;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+    }
+
+    .nav-item {
+      border: none;
+      background: transparent;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      color: var(--text-muted);
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .nav-item .ico {
+      font-size: 20px;
+      line-height: 1;
+    }
+
+    .nav-item.active {
+      color: var(--primary);
+    }
+
+    /* Login Modal */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      background: rgba(15, 23, 42, 0.72);
+      backdrop-filter: blur(6px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+
+    .modal-backdrop.hidden {
+      display: none;
+    }
+
+    .modal-card {
+      background: #fff;
+      width: 100%;
+      max-width: 420px;
+      border-radius: 22px;
+      padding: 22px 18px;
+      box-shadow: 0 24px 50px rgba(15, 23, 42, 0.35);
+    }
+
+    .input-group {
+      margin-bottom: 14px;
+    }
+
+    .input-group label {
+      display: block;
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 6px;
+      color: #334155;
+    }
+
+    .text-input {
+      width: 100%;
+      padding: 11px 13px;
+      border: 1.5px solid var(--border);
+      border-radius: 12px;
+      font-size: 15px;
+      outline: none;
+    }
+
+    .text-input:focus {
+      border-color: var(--primary);
+    }
+
+    .class-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 7px;
+    }
+
+    .class-btn {
+      padding: 10px 4px;
+      border-radius: 11px;
+      border: 1.5px solid var(--border);
+      background: var(--surface-soft);
+      font-weight: 800;
+      font-size: 14px;
+      color: var(--text);
+      cursor: pointer;
+    }
+
+    .class-btn.selected {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: #fff;
+    }
+
+    /* Toast Notification */
+    .toast {
+      position: fixed;
+      top: 66px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-16px);
+      background: #0f172a;
+      color: #fff;
+      padding: 9px 16px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 700;
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.25s ease;
+      z-index: 120;
+      max-width: 92%;
+      text-align: center;
+      box-shadow: 0 8px 24px rgba(15, 23, 42, 0.25);
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    .example-chips {
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+      margin-bottom: 8px;
+    }
+
+    .chip-btn {
+      flex: 0 0 auto;
+      background: var(--primary-soft);
+      color: var(--primary);
+      border: 1px solid #bfdbfe;
+      border-radius: 999px;
+      padding: 5px 11px;
+      font-size: 12.5px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+<div id="toast" class="toast"></div>
+
+<!-- Login Modal -->
+<div id="loginModal" class="modal-backdrop">
+  <div class="modal-card">
+    <div style="text-align:center; margin-bottom:14px;">
+      <div class="brand-logo" style="width:52px;height:52px;font-size:22px;margin:0 auto 10px;">Py</div>
+      <h2 style="margin:0 0 4px;font-size:21px;font-weight:900;">ПайтонЛаб 7</h2>
+      <p style="margin:0;color:var(--text-muted);font-size:13.5px;">Скрипты, ввод/вывод и типы данных • 7 класс</p>
+    </div>
+
+    <div class="input-group">
+      <label for="studentNameInput">Фамилия и Имя</label>
+      <input id="studentNameInput" class="text-input" type="text" placeholder="Например: Асанов Тимур" autocomplete="name" />
+    </div>
+
+    <div class="input-group">
+      <label>Выбери свой класс</label>
+      <div class="class-grid" id="classGrid">
+        <button type="button" class="class-btn" data-cls="7А">7А</button>
+        <button type="button" class="class-btn" data-cls="7Б">7Б</button>
+        <button type="button" class="class-btn" data-cls="7В">7В</button>
+        <button type="button" class="class-btn" data-cls="7Г">7Г</button>
+        <button type="button" class="class-btn" data-cls="7Л">7Л</button>
+      </div>
+    </div>
+
+    <div class="callout info" style="margin-bottom:14px;font-size:12.5px;">
+      📱 Прогресс сохраняется в телефоне автоматически — на следующем уроке продолжишь с того же места!
+    </div>
+
+    <button id="startBtn" class="btn btn-primary btn-full" type="button">🚀 Начать программировать</button>
+  </div>
+</div>
+
+<div class="app-shell">
+  <!-- Top Bar -->
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-logo">Py</div>
+      <div class="brand-text">
+        <div class="brand-title">ПайтонЛаб 7</div>
+        <div class="brand-sub">
+          <span id="engineDot" class="engine-dot"></span>
+          <span id="studentHeaderLabel">Python 3 • готов</span>
+        </div>
+      </div>
+    </div>
+    <div class="xp-pill">⭐ <span id="xpCount">0</span> XP</div>
+  </header>
+
+  <main class="content">
+    <!-- VIEW 1: MODULES HOME -->
+    <section id="view-home" class="view active">
+      <div class="card hero-card">
+        <div class="hero-title" id="heroGreeting">Привет, программист!</div>
+        <div class="hero-sub">Твой путь от первого скрипта до настоящего калькулятора на Python.</div>
+        <div class="progress-bar-wrap">
+          <div id="overallProgressBar" class="progress-bar-fill" style="width: 0%;"></div>
+        </div>
+        <div class="progress-meta">
+          <span id="overallProgressText">Пройдено 0 из 21 шагов</span>
+          <span id="overallProgressPct">0%</span>
+        </div>
+      </div>
+
+      <div id="modulesList"></div>
+    </section>
+
+    <!-- VIEW 2: MODULE WORKSPACE -->
+    <section id="view-module" class="view">
+      <div class="module-nav-bar">
+        <button class="back-btn" type="button" onclick="switchView('home')">← К модулям</button>
+        <div id="activeModuleHeading" style="font-weight:800;font-size:14.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></div>
+      </div>
+
+      <div class="seg-tabs">
+        <button class="seg-btn active" data-subtab="theory" onclick="switchModuleTab('theory')">📖 Теория</button>
+        <button class="seg-btn" data-subtab="quiz" onclick="switchModuleTab('quiz')">⚡ Тест</button>
+        <button class="seg-btn" data-subtab="practice" onclick="switchModuleTab('practice')">⌨️ Задачи</button>
+      </div>
+
+      <div id="moduleTheoryPane"></div>
+      <div id="moduleQuizPane" style="display:none;"></div>
+      <div id="modulePracticePane" style="display:none;">
+        <div id="taskPills" class="task-pills"></div>
+        <div class="card" id="taskCard">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:6px;">
+            <span id="taskBadge" class="module-badge" style="margin:0;">Задача</span>
+            <span id="taskStatusBadge" class="pill-status new">Не решена</span>
+          </div>
+          <h3 id="taskTitle" style="margin:0 0 8px;font-size:16.5px;font-weight:800;"></h3>
+          <div id="taskDescription" style="font-size:14px;color:#1e293b;"></div>
+
+          <div style="margin-top:10px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+            <button id="hintBtn" type="button" class="btn btn-hint" onclick="showNextHint()">💡 Подсказка</button>
+            <span id="hintCounter" style="font-size:12px;color:var(--text-muted);"></span>
+          </div>
+          <div id="hintBox" class="hint-box"></div>
+
+          <!-- Editor -->
+          <div class="editor-box">
+            <div class="editor-header">
+              <div class="editor-dots">
+                <span style="background:#ef4444;"></span>
+                <span style="background:#f59e0b;"></span>
+                <span style="background:#10b981;"></span>
+                <span style="margin-left:6px;width:auto;height:auto;border-radius:0;">script.py</span>
+              </div>
+              <button type="button" class="editor-reset-btn" onclick="resetCurrentTaskCode()">↺ Сбросить</button>
+            </div>
+
+            <div class="symbol-bar" id="practiceSymbolBar"></div>
+
+            <div class="editor-body">
+              <div class="line-numbers" id="practiceLineNums">1</div>
+              <textarea
+                id="practiceCode"
+                class="code-textarea"
+                spellcheck="false"
+                autocapitalize="off"
+                autocomplete="off"
+                autocorrect="off"
+                placeholder="# Напиши свой Python-скрипт здесь..."
+              ></textarea>
+            </div>
+          </div>
+
+          <div class="btn-row">
+            <button id="runPracticeBtn" type="button" class="btn btn-secondary" style="flex:0.85;" onclick="runPracticeInteractive()">▶ Запустить</button>
+            <button id="checkPracticeBtn" type="button" class="btn btn-success" style="flex:1.15;" onclick="checkPracticeTask()">✅ Проверить</button>
+          </div>
+
+          <!-- Console -->
+          <div class="console-box">
+            <div class="console-label">
+              <span>Консоль Python</span>
+              <span id="practiceConsoleStatus">Ожидание запуска</span>
+            </div>
+            <pre id="practiceConsoleOut" class="console-out" style="color:#64748b;">Нажми «▶ Запустить» для теста или «✅ Проверить» для сдачи задачи.</pre>
+            <div id="practiceConsoleErr" class="console-err" style="display:none;"></div>
+
+            <div id="practiceInputRow" class="console-input-row">
+              <div id="practiceInputPrompt" class="console-prompt-lbl">Введите значение:</div>
+              <input id="practiceInputField" class="console-input-field" type="text" placeholder="Введи ответ и нажми ОК" />
+              <button id="practiceInputSend" type="button" class="console-input-send">ОК ↵</button>
+            </div>
+          </div>
+
+          <div id="practiceTestResult" class="test-result"></div>
+
+          <div id="nextTaskWrap" style="display:none;margin-top:10px;">
+            <button type="button" class="btn btn-primary btn-full" onclick="goNextTask()">Следующая задача →</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- VIEW 3: SANDBOX -->
+    <section id="view-sandbox" class="view">
+      <div class="card">
+        <h3 style="margin:0 0 4px;font-size:17px;font-weight:800;">🧪 Песочница Python</h3>
+        <p style="margin:0 0 10px;font-size:13.5px;color:var(--text-muted);">
+          Здесь можно писать любые свои скрипты, проверять идеи и делать домашние задания по КТП.
+        </p>
+
+        <div class="example-chips">
+          <button type="button" class="chip-btn" onclick="loadSandboxPreset('hello')">👋 Приветствие</button>
+          <button type="button" class="chip-btn" onclick="loadSandboxPreset('calc')">🧮 Калькулятор</button>
+          <button type="button" class="chip-btn" onclick="loadSandboxPreset('quest')">🎮 Мини-анкета</button>
+          <button type="button" class="chip-btn" onclick="loadSandboxPreset('clear')">🗑 Очистить</button>
+        </div>
+
+        <div class="editor-box">
+          <div class="editor-header">
+            <div class="editor-dots">
+              <span style="background:#ef4444;"></span>
+              <span style="background:#f59e0b;"></span>
+              <span style="background:#10b981;"></span>
+              <span style="margin-left:6px;width:auto;height:auto;border-radius:0;">sandbox.py</span>
+            </div>
+            <span style="font-size:11px;">Свободный режим</span>
+          </div>
+          <div class="symbol-bar" id="sandboxSymbolBar"></div>
+          <div class="editor-body">
+            <div class="line-numbers" id="sandboxLineNums">1</div>
+            <textarea
+              id="sandboxCode"
+              class="code-textarea"
+              spellcheck="false"
+              autocapitalize="off"
+              autocomplete="off"
+              autocorrect="off"
+              placeholder="# Экспериментируй с Python здесь..."
+            ></textarea>
+          </div>
+        </div>
+
+        <div class="btn-row">
+          <button id="runSandboxBtn" type="button" class="btn btn-primary btn-full" onclick="runSandbox()">▶ Запустить скрипт</button>
+        </div>
+
+        <div class="console-box">
+          <div class="console-label">
+            <span>Консоль песочницы</span>
+            <span id="sandboxConsoleStatus">Готов</span>
+          </div>
+          <pre id="sandboxConsoleOut" class="console-out" style="color:#64748b;">Результат выполнения появится здесь...</pre>
+          <div id="sandboxConsoleErr" class="console-err" style="display:none;"></div>
+          <div id="sandboxInputRow" class="console-input-row">
+            <div id="sandboxInputPrompt" class="console-prompt-lbl">Введите значение:</div>
+            <input id="sandboxInputField" class="console-input-field" type="text" placeholder="Введи ответ и нажми ОК" />
+            <button id="sandboxInputSend" type="button" class="console-input-send">ОК ↵</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- VIEW 4: REPORT / CERTIFICATE -->
+    <section id="view-report" class="view">
+      <div class="cert-card">
+        <div style="font-size:12px;font-weight:800;letter-spacing:1px;color:var(--primary);text-transform:uppercase;">
+          Отчёт ученика • ПайтонЛаб 7
+        </div>
+        <h2 id="repStudentName" style="margin:6px 0 2px;font-size:21px;font-weight:900;">—</h2>
+        <div id="repStudentClass" style="font-size:14px;font-weight:700;color:var(--text-muted);">Класс: —</div>
+
+        <div id="repGradeCircle" class="grade-circle g2">—</div>
+        <div id="repGradeCaption" style="font-size:13.5px;font-weight:700;color:#334155;">Выполни задания, чтобы получить оценку</div>
+
+        <div id="repHonestyBadge" class="honesty-badge ok">🛡 Самостоятельная работа</div>
+
+        <div class="stat-grid">
+          <div class="stat-box">
+            <div class="stat-box-lbl">Решено задач</div>
+            <div class="stat-box-val" id="repTasksVal">0 / 12</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-box-lbl">Тесты (квизы)</div>
+            <div class="stat-box-val" id="repQuizzesVal">0 / 9</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-box-lbl">Опыт (XP)</div>
+            <div class="stat-box-val" id="repXpVal">0 XP</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-box-lbl">Подсказок взято</div>
+            <div class="stat-box-val" id="repHintsVal">0</div>
+          </div>
+        </div>
+
+        <div id="repModuleBreakdown" style="text-align:left;background:#fff;border:1px solid var(--border);border-radius:12px;padding:10px 12px;font-size:13px;margin-bottom:14px;"></div>
+
+        <button type="button" class="btn btn-primary btn-full" onclick="copyReportText()">📋 Скопировать отчёт для учителя</button>
+        <button id="sendSheetBtn" type="button" class="btn btn-success btn-full" style="display:none;margin-top:8px;" onclick="sendToGoogleSheet()">📤 Отправить в журнал учителя</button>
+
+        <div class="verify-code" id="repVerifyCode">КОД: —</div>
+        <div style="font-size:11.5px;color:var(--text-muted);margin-top:4px;" id="repTimestamp"></div>
+      </div>
+
+      <div class="card" style="margin-top:12px;">
+        <div style="font-weight:700;font-size:13.5px;margin-bottom:8px;">Управление профилем</div>
+        <div class="btn-row" style="margin-top:0;">
+          <button type="button" class="btn btn-secondary" style="flex:1;font-size:13px;" onclick="openChangeProfile()">👤 Сменить ученика</button>
+          <button type="button" class="btn btn-secondary" style="flex:1;font-size:13px;color:var(--danger);" onclick="confirmResetProgress()">🗑 Сбросить прогресс</button>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<!-- Bottom Navigation -->
+<nav class="bottom-nav">
+  <div class="bottom-nav-inner">
+    <button class="nav-item active" data-nav="home" onclick="switchView('home')">
+      <span class="ico">📚</span>
+      <span>Уроки</span>
+    </button>
+    <button class="nav-item" data-nav="module" onclick="openCurrentPractice()">
+      <span class="ico">⌨️</span>
+      <span>Практика</span>
+    </button>
+    <button class="nav-item" data-nav="sandbox" onclick="switchView('sandbox')">
+      <span class="ico">🧪</span>
+      <span>Песочница</span>
+    </button>
+    <button class="nav-item" data-nav="report" onclick="switchView('report')">
+      <span class="ico">🏆</span>
+      <span>Итог</span>
+    </button>
+  </div>
+</nav>
+
+<script>
+/* ============================================================================
+   НАСТРОЙКА ДЛЯ УЧИТЕЛЯ (ОПЦИОНАЛЬНО):
+   Если захочешь принимать результаты напрямую в Google Таблицу (Apps Script),
+   просто вставь URL веб-приложения ниже. Если оставить пустым — работает
+   показ экрана учителю + копирование отчёта с проверочным кодом.
+============================================================================ */
+const GOOGLE_SCRIPT_URL = "";
+
+/* ============================================================================
+   УЧЕБНАЯ ПРОГРАММА (7 КЛАСС — ПО КТП: СКРИПТЫ, INPUT/PRINT, ТИПЫ ДАННЫХ)
+============================================================================ */
+const MODULES = [
+  {
+    id: 0,
+    badge: "Урок 1 • КТП 21–22",
+    isBonus: false,
+    title: "Работа со скриптами и print()",
+    desc: "Что такое скрипт, порядок команд, вывод на экран, комментарии и поиск ошибок.",
+    theory: [
+      {
+        title: "🐍 Что такое скрипт?",
+        body: `
+          <p><strong>Скрипт</strong> (или программа) — это список чётких команд для компьютера, записанных на языке программирования.</p>
+          <p>Python читает скрипт <strong>строго сверху вниз</strong>, строка за строкой, как рецепт или сценарий фильма.</p>
+          <div class="code-sample"><span class="kw">print</span>(<span class="st">"1. Включаем ракету"</span>)
+<span class="kw">print</span>(<span class="st">"2. Обратный отсчёт: 3, 2, 1..."</span>)
+<span class="kw">print</span>(<span class="st">"3. Поехали!"</span>)</div>
+        `,
+        tryCode: `print("1. Включаем ракету")\nprint("2. Обратный отсчёт: 3, 2, 1...")\nprint("3. Поехали!")`
+      },
+      {
+        title: "📢 Команда print() — голос программы",
+        body: `
+          <p>Чтобы программа показала текст или число на экране, используют команду <span class="inline-code">print(...)</span>.</p>
+          <ul>
+            <li><strong>Текст</strong> всегда пишем в кавычках: <span class="inline-code">"Привет"</span> или <span class="inline-code">'Привет'</span>.</li>
+            <li><strong>Числа и примеры</strong> без кавычек Python сам вычислит!</li>
+          </ul>
+          <div class="code-sample"><span class="kw">print</span>(<span class="st">"5 + 3"</span>)   <span class="cm"># выведет текст: 5 + 3</span>
+<span class="kw">print</span>(<span class="nm">5</span> + <span class="nm">3</span>)     <span class="cm"># посчитает и выведет: 8</span></div>
+          <div class="callout">⚠️ <strong>Важно:</strong> Python различает большие и маленькие буквы! Команда <span class="inline-code">Print()</span> вызовет ошибку, правильно только <span class="inline-code">print()</span>.</div>
+        `,
+        tryCode: `print("5 + 3")\nprint(5 + 3)`
+      },
+      {
+        title: "💬 Комментарии (#) — заметки для людей",
+        body: `
+          <p>Всё, что написано после знака решётки <span class="inline-code">#</span>, компьютер полностью игнорирует. Это подсказки для программиста.</p>
+          <div class="code-sample"><span class="cm"># Этот скрипт считает секунды в часе</span>
+<span class="kw">print</span>(<span class="nm">60</span> * <span class="nm">60</span>)
+<span class="cm"># print("Эта строка НЕ выполнится")</span></div>
+        `,
+        tryCode: `# Этот скрипт считает секунды в часе\nprint(60 * 60)\n# print("Эта строка НЕ выполнится")`
+      }
+    ],
+    quizzes: [
+      {
+        id: "m0q0",
+        question: "1. Какая команда написана БЕЗ ошибок и сработает в Python?",
+        options: [
+          'Print("Привет")',
+          'print("Привет")',
+          'print(Привет)',
+          'print "Привет"'
+        ],
+        correct: 1,
+        explain: "Команда print всегда пишется с маленькой буквы, аргумент в круглых скобках, а текст — в кавычках."
+      },
+      {
+        id: "m0q1",
+        question: '2. Что выведет строка: print("10 + 5") ?',
+        options: [
+          "15",
+          "10 + 5",
+          "Ошибку",
+          "Ничего"
+        ],
+        correct: 1,
+        explain: 'Всё внутри кавычек Python воспринимает как обычный текст, поэтому выведет буквально "10 + 5".'
+      },
+      {
+        id: "m0q2",
+        question: '3. Что появится на экране после запуска?\n# print("Секрет")\nprint("Готово")',
+        options: [
+          "Секрет и Готово",
+          "Только Секрет",
+          "Только Готово",
+          "Будет ошибка из-за знака #"
+        ],
+        correct: 2,
+        explain: "Знак # превращает строку в комментарий — Python её пропускает и выполняет только print(\"Готово\")."
+      }
+    ],
+    tasks: [
+      {
+        id: "m0t0",
+        title: "Первый скрипт",
+        desc: 'Напиши команду <span class="inline-code">print</span>, которая выведет на экран ровно фразу:<br><strong>Привет, Python!</strong>',
+        starter: '# Напиши свой первый скрипт ниже\n',
+        hints: [
+          'Используй команду print(...) и не забудь поставить двойные или одинарные кавычки вокруг текста.',
+          'Шаблон: print("Привет, Python!") — проверь заглавную П, запятую, пробел и восклицательный знак!'
+        ],
+        tests: [
+          {
+            inputs: [],
+            expectedLines: ["Привет, Python!"]
+          }
+        ]
+      },
+      {
+        id: "m0t1",
+        title: "Игровая карточка (3 строки)",
+        desc: 'Скрипт выполняется сверху вниз. Напиши <strong>3 команды print</strong>, чтобы на экране появились ровно 3 строки:<br><div class="code-sample" style="margin:6px 0;padding:8px 10px;">Игрок: Старт\nУровень: 1\nГотов к коду!</div>',
+        starter: 'print("Игрок: Старт")\n# Допиши ещё 2 команды print ниже\n',
+        hints: [
+          'Каждая новая команда print(...) выводит текст с новой строки.',
+          'Допиши строки:\nprint("Уровень: 1")\nprint("Готов к коду!")'
+        ],
+        tests: [
+          {
+            inputs: [],
+            expectedLines: ["Игрок: Старт", "Уровень: 1", "Готов к коду!"]
+          }
+        ]
+      },
+      {
+        id: "m0t2",
+        title: "Почини скрипт (Дебаггинг)",
+        desc: 'В редакторе спрятаны <strong>3 ошибки новичка</strong>. Исправь код так, чтобы скрипт заработал и вывел:<br><div class="code-sample" style="margin:6px 0;padding:8px 10px;">Шаг 1 готов\nШаг 2 готов\nШаг 3 готов</div>',
+        starter: 'Print("Шаг 1 готов")\nprint("Шаг 2 готов)\nprint(Шаг 3 готов)',
+        hints: [
+          'Проверь все 3 строки: в 1-й — регистр буквы P, во 2-й — пропала закрывающая кавычка, в 3-й — вообще нет кавычек.',
+          'Должно получиться 3 аккуратных print("Шаг ... готов") с маленькой буквы и парными кавычками.'
+        ],
+        tests: [
+          {
+            inputs: [],
+            expectedLines: ["Шаг 1 готов", "Шаг 2 готов", "Шаг 3 готов"]
+          }
+        ]
+      },
+      {
+        id: "m0t3",
+        title: "Калькулятор и комментарий",
+        desc: '1) Добавь в скрипт комментарий (любой текст после <span class="inline-code">#</span>).<br>2) Выведи результат вычисления <span class="inline-code">15 + 25</span> <strong>без кавычек</strong>, чтобы Python сам посчитал ответ.',
+        starter: '',
+        hints: [
+          'В первой строке напиши, например: # мой расчет. Во второй используй print(15 + 25).',
+          'Пример структуры:\n# Считаю сумму\nprint(15 + 25)'
+        ],
+        codeCheck: (code) => {
+          if (!code.includes("#")) return "Не забудь добавить комментарий со знаком #!";
+          if (!code.includes("+")) return "Пусть Python сам посчитает сумму с помощью знака + (например, 15 + 25)!";
+          return null;
+        },
+        tests: [
+          {
+            inputs: [],
+            expectedLines: ["40"]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    id: 1,
+    badge: "Урок 2 • КТП 23–24",
+    isBonus: false,
+    title: "Переменные и ввод input()",
+    desc: "Храним данные в переменных, общаемся с пользователем через input() и комбинируем вывод.",
+    theory: [
+      {
+        title: "📦 Переменная = коробка с названием",
+        body: `
+          <p><strong>Переменная</strong> хранит данные в памяти компьютера. Знак <span class="inline-code">=</span> кладёт значение в «коробку».</p>
+          <div class="code-sample">hero = <span class="st">"Стив"</span>
+hearts = <span class="nm">10</span>
+<span class="kw">print</span>(hero)
+<span class="kw">print</span>(hearts)</div>
+          <ul>
+            <li>Имя переменной пишем на латинице, <strong>без пробелов</strong> (можно <span class="inline-code">my_name</span>).</li>
+            <li>Нельзя начинать имя с цифры (<span class="inline-code">1player</span> — ошибка, <span class="inline-code">player1</span> — можно).</li>
+          </ul>
+        `,
+        tryCode: `hero = "Стив"\nhearts = 10\nprint(hero)\nprint(hearts)`
+      },
+      {
+        title: "⌨️ Ввод данных: команда input()",
+        body: `
+          <p>Чтобы программа спросила что-то у человека, нужна команда <span class="inline-code">input()</span>. Она ждёт, пока пользователь введёт текст, и сохраняет его в переменную.</p>
+          <div class="code-sample">name = <span class="kw">input</span>(<span class="st">"Как тебя зовут? "</span>)
+<span class="kw">print</span>(<span class="st">"Привет,"</span>, name)</div>
+          <div class="callout info">💡 Когда в <span class="inline-code">print()</span> перечисляем части через <strong>запятую</strong>, Python сам ставит аккуратный пробел между ними!</div>
+        `,
+        tryCode: `name = input("Как тебя зовут? ")\nprint("Привет,", name)`
+      },
+      {
+        title: "🔄 Перезапись и обмен значений",
+        body: `
+          <p>Значение в переменной можно менять по ходу скрипта. В Python поменять местами две переменные можно красиво в одну строку:</p>
+          <div class="code-sample">a = <span class="st">"Огонь"</span>
+b = <span class="st">"Вода"</span>
+a, b = b, a   <span class="cm"># магия Python: обмен!</span>
+<span class="kw">print</span>(a, b)</div>
+        `,
+        tryCode: `a = "Огонь"\nb = "Вода"\na, b = b, a\nprint(a, b)`
+      }
+    ],
+    quizzes: [
+      {
+        id: "m1q0",
+        question: "1. Какое имя переменной НЕПРАВИЛЬНОЕ (вызовет ошибку)?",
+        options: [
+          "user_name",
+          "score2",
+          "2player",
+          "city"
+        ],
+        correct: 2,
+        explain: "Имя переменной никогда не может начинаться с цифры! 2player вызовет SyntaxError."
+      },
+      {
+        id: "m1q1",
+        question: "2. Что выведет этот скрипт?\nx = 5\nx = 12\nprint(x)",
+        options: [
+          "5",
+          "12",
+          "17",
+          "5 12"
+        ],
+        correct: 1,
+        explain: "Вторая строка перезаписала значение в переменной x. Старое значение 5 заменилось на 12."
+      },
+      {
+        id: "m1q2",
+        question: "3. Для чего нужна команда input()?",
+        options: [
+          "Вывести текст на экран",
+          "Получить данные, которые ввёл пользователь",
+          "Удалить переменную",
+          "Посчитать сумму чисел"
+        ],
+        correct: 1,
+        explain: "input() останавливает скрипт, ждёт ввод с клавиатуры и возвращает введённую строку."
+      }
+    ],
+    tasks: [
+      {
+        id: "m1t0",
+        title: "Коробка с городом",
+        desc: 'Создай переменную <span class="inline-code">city</span> и сохрани в неё текст <span class="inline-code">"Бишкек"</span>. Затем выведи переменную через <span class="inline-code">print(city)</span>.',
+        starter: 'city = \nprint(city)',
+        hints: [
+          'После знака = допиши текст в кавычках: "Бишкек".',
+          'Полный код:\ncity = "Бишкек"\nprint(city)'
+        ],
+        codeCheck: (code) => {
+          if (!/city\s*=/.test(code)) return "Создай переменную с именем city!";
+          if (!/print\s*\(\s*city\s*\)/.test(code)) return "Выведи именно переменную: print(city)";
+          return null;
+        },
+        tests: [
+          {
+            inputs: [],
+            expectedLines: ["Бишкек"]
+          }
+        ]
+      },
+      {
+        id: "m1t1",
+        title: "Умное приветствие",
+        desc: 'Спроси имя пользователя с помощью <span class="inline-code">input()</span> и выведи:<br><strong>Привет, &lt;имя&gt;</strong><br><span style="font-size:12.5px;color:#64748b;">Например, если ввели Амир → вывод: Привет, Амир</span>',
+        starter: 'name = input()\n# Выведи приветствие ниже\n',
+        hints: [
+          'Используй запятую внутри print: print("Привет,", name). Запятая сама добавит пробел!',
+          'Структура:\nname = input()\nprint("Привет,", name)'
+        ],
+        codeCheck: (code) => {
+          if (!code.includes("input")) return "Нужно прочитать имя через input(), а не писать его вручную!";
+          return null;
+        },
+        tests: [
+          { inputs: ["Амир"], expectedLines: ["Привет, Амир"], allowExclamation: true },
+          { inputs: ["Айдана"], expectedLines: ["Привет, Айдана"], allowExclamation: true }
+        ]
+      },
+      {
+        id: "m1t2",
+        title: "Анкета хобби",
+        desc: 'Скрипт должен спросить <strong>два значения</strong> через <span class="inline-code">input()</span>: сначала имя, потом любимое занятие.<br>Выведи одну строку: <strong>&lt;имя&gt; любит &lt;занятие&gt;</strong><br><span style="font-size:12.5px;color:#64748b;">Пример: Тимур любит Minecraft</span>',
+        starter: 'name = input()\nhobby = input()\n# Выведи фразу ниже\n',
+        hints: [
+          'Внутри print() можно перечислить 3 элемента через запятую: переменную, слово в кавычках и вторую переменную.',
+          'print(name, "любит", hobby)'
+        ],
+        codeCheck: (code) => {
+          const matches = code.match(/input\s*\(/g) || [];
+          if (matches.length < 2) return "Вызови input() дважды: один раз для имени, второй для хобби!";
+          return null;
+        },
+        tests: [
+          { inputs: ["Тимур", "Minecraft"], expectedLines: ["Тимур любит Minecraft"] },
+          { inputs: ["Алина", "рисовать"], expectedLines: ["Алина любит рисовать"] }
+        ]
+      },
+      {
+        id: "m1t3",
+        title: "Обмен местами",
+        desc: 'В коде уже заданы <span class="inline-code">a = "Кошка"</span> и <span class="inline-code">b = "Собака"</span>.<br>Допиши строку обмена так, чтобы их значения <strong>поменялись местами</strong> (не исправляя первые две строки!).',
+        starter: 'a = "Кошка"\nb = "Собака"\n# Поменяй значения a и b местами:\n\nprint(a)\nprint(b)',
+        hints: [
+          'В Python поменять две переменные местами можно одной строкой: a, b = b, a (или через третью переменную temp).',
+          'Просто допиши строку:\na, b = b, a'
+        ],
+        codeCheck: (code) => {
+          if (!/a\s*=\s*["']Кошка["']/.test(code) || !/b\s*=\s*["']Собака["']/.test(code)) {
+            return 'Не удаляй исходные строки a = "Кошка" и b = "Собака" — обменяй их через код!';
+          }
+          return null;
+        },
+        tests: [
+          { inputs: [], expectedLines: ["Собака", "Кошка"] }
+        ]
+      }
+    ]
+  },
+  {
+    id: 2,
+    badge: "Урок 3 • КТП 25–26 (Бонус)",
+    isBonus: true,
+    title: "Типы данных и операции",
+    desc: "int, float, str — главная ловушка input(), арифметика, деление // и остаток %.",
+    theory: [
+      {
+        title: "🧱 Три главных типа данных",
+        body: `
+          <ul>
+            <li><span class="inline-code">int</span> — целые числа: <span class="inline-code">7</span>, <span class="inline-code">-15</span>, <span class="inline-code">2026</span></li>
+            <li><span class="inline-code">float</span> — дробные числа (через точку!): <span class="inline-code">3.14</span>, <span class="inline-code">5.5</span></li>
+            <li><span class="inline-code">str</span> — строки (текст в кавычках): <span class="inline-code">"Привет"</span>, <span class="inline-code">"123"</span></li>
+          </ul>
+          <div class="callout">🪤 <strong>Главная ловушка новичка:</strong> команда <span class="inline-code">input()</span> ВСЕГДА возвращает текст (<span class="inline-code">str</span>)! Поэтому <span class="inline-code">"5" + "3"</span> склеится в <span class="inline-code">"53"</span>! Чтобы складывать числа, оборачиваем ввод в <span class="inline-code">int(input())</span>.</div>
+          <div class="code-sample">a = <span class="kw">int</span>(<span class="kw">input</span>(<span class="st">"Число 1: "</span>))
+b = <span class="kw">int</span>(<span class="kw">input</span>(<span class="st">"Число 2: "</span>))
+<span class="kw">print</span>(a + b)</div>
+        `,
+        tryCode: `print("Текст:", "5" + "3")\nprint("Числа:", 5 + 3)`
+      },
+      {
+        title: "➗ Особые операции: //, % и **",
+        body: `
+          <p>Кроме обычных <span class="inline-code">+</span>, <span class="inline-code">-</span>, <span class="inline-code">*</span>, <span class="inline-code">/</span>, в Python есть 3 суперполезных знака:</p>
+          <ul>
+            <li><span class="inline-code">//</span> — <strong>деление нацело</strong> (сколько целых раз поместилось): <span class="inline-code">10 // 3</span> → <span class="inline-code">3</span></li>
+            <li><span class="inline-code">%</span> — <strong>остаток от деления</strong>: <span class="inline-code">10 % 3</span> → <span class="inline-code">1</span></li>
+            <li><span class="inline-code">**</span> — <strong>возведение в степень</strong>: <span class="inline-code">2 ** 3</span> → <span class="inline-code">8</span></li>
+          </ul>
+          <div class="code-sample"><span class="kw">print</span>(<span class="nm">10</span> // <span class="nm">3</span>)  <span class="cm"># 3 целых</span>
+<span class="kw">print</span>(<span class="nm">10</span> % <span class="nm">3</span>)   <span class="cm"># 1 в остатке</span>
+<span class="kw">print</span>(<span class="nm">2</span> ** <span class="nm">4</span>)   <span class="cm"># 16</span></div>
+        `,
+        tryCode: `print("10 // 3 =", 10 // 3)\nprint("10 % 3 =", 10 % 3)\nprint("2 ** 4 =", 2 ** 4)`
+      }
+    ],
+    quizzes: [
+      {
+        id: "m2q0",
+        question: '1. Что выведет код: print("7" + "3") ?',
+        options: [
+          "10",
+          "73",
+          "7 + 3",
+          "Ошибку"
+        ],
+        correct: 1,
+        explain: 'Числа в кавычках — это строки (str). Плюс для строк просто склеивает их: "7" + "3" = "73".'
+      },
+      {
+        id: "m2q1",
+        question: "2. Как правильно прочитать ЦЕЛОЕ число с клавиатуры в переменную x?",
+        options: [
+          "x = input()",
+          "x = str(input())",
+          "x = int(input())",
+          "x = print(input())"
+        ],
+        correct: 2,
+        explain: "int() превращает текст из input() в целое число, с которым можно выполнять математические действия."
+      },
+      {
+        id: "m2q2",
+        question: "3. Чему равно 14 % 4 (остаток от деления)?",
+        options: [
+          "3",
+          "2",
+          "3.5",
+          "4"
+        ],
+        correct: 1,
+        explain: "4 помещается в 14 три раза (3 * 4 = 12), а в остатке остаётся 14 - 12 = 2."
+      }
+    ],
+    tasks: [
+      {
+        id: "m2t0",
+        title: "Калькулятор суммы",
+        desc: 'Прочитай <strong>два целых числа</strong> с помощью <span class="inline-code">int(input())</span> и выведи их сумму.',
+        starter: 'a = int(input())\nb = \nprint()',
+        hints: [
+          'Второе число тоже оберни в int(input()), а внутри print() сложи a + b.',
+          'a = int(input())\nb = int(input())\nprint(a + b)'
+        ],
+        codeCheck: (code) => {
+          if (!code.includes("int")) return "Используй int(input()), иначе Python склеит числа как текст!";
+          return null;
+        },
+        tests: [
+          { inputs: ["12", "8"], expectedLines: ["20"] },
+          { inputs: ["45", "55"], expectedLines: ["100"] }
+        ]
+      },
+      {
+        id: "m2t1",
+        title: "Сколько лет в 2030?",
+        desc: 'Пользователь вводит свой <strong>год рождения</strong> (целое число). Выведи, сколько лет ему исполнится в <strong>2030</strong> году.',
+        starter: 'year = int(input())\n# Посчитай и выведи возраст в 2030 году\n',
+        hints: [
+          'Чтобы узнать возраст в 2030 году, нужно из 2030 вычесть год рождения.',
+          'print(2030 - year)'
+        ],
+        tests: [
+          { inputs: ["2013"], expectedLines: ["17"] },
+          { inputs: ["2012"], expectedLines: ["18"] }
+        ]
+      },
+      {
+        id: "m2t2",
+        title: "Делёж пиццы (// и %)",
+        desc: 'На праздник купили <span class="inline-code">n</span> кусков пиццы на <span class="inline-code">k</span> друзей (вводятся два целых числа).<br>Выведи <strong>две строки</strong>:<br>1) Сколько целых кусков достанется каждому (<span class="inline-code">//</span>)<br>2) Сколько кусков останется (<span class="inline-code">%</span>)',
+        starter: 'n = int(input())\nk = int(input())\n# Выведи целую часть и остаток на двух строках\n',
+        hints: [
+          'Первая строка: print(n // k). Вторая строка: print(n % k).',
+          'n = int(input())\nk = int(input())\nprint(n // k)\nprint(n % k)'
+        ],
+        tests: [
+          { inputs: ["10", "3"], expectedLines: ["3", "1"] },
+          { inputs: ["17", "5"], expectedLines: ["3", "2"] }
+        ]
+      },
+      {
+        id: "m2t3",
+        title: "Касса магазина (Босс)",
+        desc: 'Программа получает <strong>3 ввода</strong>:<br>1) Название товара (текст)<br>2) Цену за 1 шт (целое число)<br>3) Количество (целое число)<br>Выведи итог: <strong>&lt;товар&gt;: &lt;сумма&gt; сом</strong><br><span style="font-size:12.5px;color:#64748b;">Пример: Сок, 120, 3 → Сок: 360 сом</span>',
+        starter: 'item = input()\nprice = int(input())\ncount = int(input())\n# Посчитай сумму и выведи чек\n',
+        hints: [
+          'Сначала посчитай total = price * count. Чтобы после товара двоеточие стояло без лишнего пробела, напиши item + ":".',
+          'total = price * count\nprint(item + ":", total, "сом")'
+        ],
+        tests: [
+          { inputs: ["Сок", "120", "3"], expectedLines: ["Сок: 360 сом"], flexibleColon: true },
+          { inputs: ["Тетрадь", "45", "4"], expectedLines: ["Тетрадь: 180 сом"], flexibleColon: true }
+        ]
+      }
+    ]
+  }
+];
+
+/* ============================================================================
+   СОСТОЯНИЕ ПРИЛОЖЕНИЯ И СОХРАНЕНИЕ (localStorage)
+============================================================================ */
+const STORAGE_KEY = "pylab7_state_v1";
+
+function createDefaultState() {
+  return {
+    studentName: "",
+    studentClass: "",
+    activeModule: 0,
+    activeSubtab: "theory",
+    activeTaskIdx: [0, 0, 0],
+    solvedTasks: {},   // taskId -> true
+    solvedQuizzes: {}, // quizId -> true
+    savedCode: {},     // taskId -> string
+    hintsUsed: 0,
+    tabSwitches: 0,
+    startedAt: new Date().toISOString()
+  };
+}
+
+let state = loadState();
+let currentHintStep = 0;
+let isRunning = false;
+let skulptReady = false;
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return createDefaultState();
+    const parsed = JSON.parse(raw);
+    return Object.assign(createDefaultState(), parsed);
+  } catch (e) {
+    return createDefaultState();
+  }
+}
+
+function saveState() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  } catch (e) {}
+}
+
+/* ============================================================================
+   МОБИЛЬНАЯ ПАНЕЛЬ БЫСТРОГО ВВОДА СИМВОЛОВ
+============================================================================ */
+const QUICK_SYMBOLS = [
+  { label: 'print("")', insert: 'print("")', cursorBack: 2 },
+  { label: 'input()', insert: 'input()', cursorBack: 1 },
+  { label: 'int()', insert: 'int()', cursorBack: 1 },
+  { label: '""', insert: '""', cursorBack: 1 },
+  { label: '()', insert: '()', cursorBack: 1 },
+  { label: ' = ', insert: ' = ', cursorBack: 0 },
+  { label: ', ', insert: ', ', cursorBack: 0 },
+  { label: '# ', insert: '# ', cursorBack: 0 },
+  { label: '//', insert: ' // ', cursorBack: 0 },
+  { label: '%', insert: ' % ', cursorBack: 0 },
+  { label: ':', insert: ':', cursorBack: 0 },
+  { label: '↹ Tab', insert: '    ', cursorBack: 0 }
+];
+
+function buildSymbolBar(barId, textareaId, lineNumId) {
+  const bar = document.getElementById(barId);
+  const ta = document.getElementById(textareaId);
+  bar.innerHTML = "";
+  QUICK_SYMBOLS.forEach(sym => {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "sym-btn";
+    btn.textContent = sym.label;
+    btn.addEventListener("pointerdown", (e) => {
+      e.preventDefault(); // keep keyboard focus smooth
+      insertAtCursor(ta, sym.insert, sym.cursorBack);
+      updateLineNumbers(ta, document.getElementById(lineNumId));
+      if (textareaId === "practiceCode") saveCurrentTaskCode();
+    });
+    bar.appendChild(btn);
+  });
+}
+
+function insertAtCursor(textarea, text, cursorBack) {
+  const start = textarea.selectionStart || 0;
+  const end = textarea.selectionEnd || 0;
+  const val = textarea.value;
+  textarea.value = val.substring(0, start) + text + val.substring(end);
+  const newPos = start + text.length - (cursorBack || 0);
+  textarea.focus();
+  textarea.setSelectionRange(newPos, newPos);
+}
+
+function updateLineNumbers(textarea, gutterEl) {
+  const lines = (textarea.value.match(/\n/g) || []).length + 1;
+  let s = "";
+  for (let i = 1; i <= lines; i++) s += i + (i < lines ? "\n" : "");
+  gutterEl.textContent = s;
+}
+
+/* ============================================================================
+   F-STRING ПРЕПРОЦЕССОР (ЧТОБЫ F-СТРОКИ РАБОТАЛИ ВЕЗДЕ, ДАЖЕ В SKULPT 1.2)
+============================================================================ */
+function preprocessFStrings(code) {
+  // Converts simple Python f"text {expr}" / f'text {expr}' into string concatenation
+  return code.replace(/([fF])(["'])((?:\\.|(?!\2)[^\\\n])*)\2/g, (match, prefix, quote, inner) => {
+    if (!inner.includes("{")) return quote + inner + quote;
+    const parts = [];
+    let i = 0;
+    let buf = "";
+    while (i < inner.length) {
+      if (inner[i] === "{" && inner[i + 1] !== "{") {
+        if (buf.length > 0) {
+          parts.push(quote + buf + quote);
+          buf = "";
+        }
+        let depth = 1;
+        let j = i + 1;
+        while (j < inner.length && depth > 0) {
+          if (inner[j] === "{") depth++;
+          else if (inner[j] === "}") depth--;
+          j++;
+        }
+        const expr = inner.slice(i + 1, j - 1).trim();
+        parts.push("str(" + expr + ")");
+        i = j;
+      } else {
+        buf += inner[i];
+        i++;
+      }
+    }
+    if (buf.length > 0) parts.push(quote + buf + quote);
+    return "(" + (parts.length ? parts.join(" + ") : quote + quote) + ")";
+  });
+}
+
+/* ============================================================================
+   ПЕРЕВОДЧИК ОШИБОК PYTHON НА ПОНЯТНЫЙ РУССКИЙ ЯЗЫК
+============================================================================ */
+function translatePythonError(rawErr) {
+  const err = String(rawErr || "Неизвестная ошибка");
+  if (/SyntaxError|ParseError|bad input|EOL while scanning/i.test(err)) {
+    if (/EOL|unterminated|string/i.test(err)) {
+      return "🔴 Ошибка в строке: ты открыл кавычку, но забыл закрыть её!";
+    }
+    return "🔴 Ошибка синтаксиса (SyntaxError): проверь скобки (), кавычки \"\" и правильность написания команд.\nДетали: " + err;
+  }
+  if (/NameError/i.test(err)) {
+    const m = err.match(/name ['"]([^'"]+)['"]/i);
+    const nm = m ? m[1] : "";
+    if (/^Print$/i.test(nm) && nm !== "print") {
+      return `🔴 Неизвестное имя «${nm}». В Python команды пишутся с маленькой буквы: напиши print(...)!`;
+    }
+    if (/^Input$/i.test(nm) && nm !== "input") {
+      return `🔴 Неизвестное имя «${nm}». Напиши с маленькой буквы: input()!`;
+    }
+    return `🔴 Неизвестное имя «${nm || "?"}»: либо ты забыл поставить кавычки вокруг текста, либо используешь переменную до её создания.`;
+  }
+  if (/TypeError/i.test(err)) {
+    return "🔴 Ошибка типов (TypeError): нельзя напрямую складывать текст и число. Используй запятую в print(...) или преобразуй через int() / str().";
+  }
+  if (/ValueError/i.test(err)) {
+    return "🔴 Ошибка значения (ValueError): функция int() или float() получила текст вместо числа. Вводи только цифры!";
+  }
+  if (/ZeroDivisionError/i.test(err)) {
+    return "🔴 Деление на ноль! На ноль делить нельзя.";
+  }
+  if (/IndentationError/i.test(err)) {
+    return "🔴 Ошибка отступов: проверь лишние пробелы в начале строки.";
+  }
+  if (/TimeLimitError/i.test(err)) {
+    return "🔴 Скрипт выполнялся слишком долго (возможно, бесконечный цикл).";
+  }
+  return "🔴 Ошибка: " + err;
+}
+
+/* ============================================================================
+   ВСТРОЕННЫЙ ОФЛАЙН-ДВИЖОК PYTHON (FALLBACK, ЕСЛИ НЕТ СЕТИ / CDN)
+============================================================================ */
+async function runFallbackPython(rawCode, onOutput, onInput) {
+  const code = preprocessFStrings(rawCode);
+  const env = {};
+
+  function splitTopLevel(str, sepChar) {
+    const res = [];
+    let cur = "", inStr = null, depth = 0;
+    for (let i = 0; i < str.length; i++) {
+      const ch = str[i];
+      if (inStr) {
+        cur += ch;
+        if (ch === "\\" && i + 1 < str.length) { cur += str[++i]; continue; }
+        if (ch === inStr) inStr = null;
+      } else {
+        if (ch === '"' || ch === "'") { inStr = ch; cur += ch; }
+        else if (ch === "(" || ch === "[" || ch === "{") { depth++; cur += ch; }
+        else if (ch === ")" || ch === "]" || ch === "}") { depth--; cur += ch; }
+        else if (ch === sepChar && depth === 0) { res.push(cur.trim()); cur = ""; }
+        else cur += ch;
+      }
+    }
+    if (cur.trim() !== "") res.push(cur.trim());
+    return res;
+  }
+
+  function stripComment(line) {
+    let inStr = null;
+    for (let i = 0; i < line.length; i++) {
+      const ch = line[i];
+      if (inStr) {
+        if (ch === "\\" && i + 1 < line.length) { i++; continue; }
+        if (ch === inStr) inStr = null;
+      } else {
+        if (ch === '"' || ch === "'") inStr = ch;
+        else if (ch === "#") return line.slice(0, i);
+      }
+    }
+    return line;
+  }
+
+  async function evalExpr(expr) {
+    expr = expr.trim();
+    if (!expr) throw new Error("SyntaxError: пустое выражение");
+
+    // Check unclosed quotes
+    let q = null;
+    for (let i = 0; i < expr.length; i++) {
+      if (q) {
+        if (expr[i] === "\\") { i++; continue; }
+        if (expr[i] === q) q = null;
+      } else if (expr[i] === '"' || expr[i] === "'") {
+        q = expr[i];
+      }
+    }
+    if (q) throw new Error("SyntaxError: EOL while scanning string literal");
+
+    // Resolve input(...) calls asynchronously from innermost to outermost
+    while (/\binput\s*\(/.test(expr)) {
+      const m = /\binput\s*\(/.exec(expr);
+      const start = m.index;
+      let depth = 0, inS = null, end = -1;
+      for (let i = start + m[0].length - 1; i < expr.length; i++) {
+        const c = expr[i];
+        if (inS) {
+          if (c === "\\") { i++; continue; }
+          if (c === inS) inS = null;
+        } else {
+          if (c === '"' || c === "'") inS = c;
+          else if (c === "(") depth++;
+          else if (c === ")") { depth--; if (depth === 0) { end = i; break; } }
+        }
+      }
+      if (end === -1) throw new Error("SyntaxError: незакрытая скобка в input()");
+      const innerArg = expr.slice(start + m[0].length, end).trim();
+      const promptVal = innerArg ? String(await evalExpr(innerArg)) : "";
+      const userVal = await onInput(promptVal);
+      const safeJson = JSON.stringify(String(userVal));
+      expr = expr.slice(0, start) + safeJson + expr.slice(end + 1);
+    }
+
+    // Build safe JS expression with Python helpers
+    // Handle // (floor division) outside strings
+    let jsExpr = "";
+    let inS = null;
+    for (let i = 0; i < expr.length; i++) {
+      const c = expr[i];
+      if (inS) {
+        jsExpr += c;
+        if (c === "\\" && i + 1 < expr.length) { jsExpr += expr[++i]; continue; }
+        if (c === inS) inS = null;
+      } else {
+        if (c === '"' || c === "'") { inS = c; jsExpr += c; }
+        else if (c === "/" && expr[i + 1] === "/") {
+          // convert a // b via wrapper later; simple marker
+          jsExpr += " / ";
+          // For integer floor division we handle below via custom parser
+          i++;
+          return evalFloorDiv(expr);
+        } else {
+          jsExpr += c;
+        }
+      }
+    }
+
+    const scopeKeys = Object.keys(env);
+    const scopeVals = scopeKeys.map(k => env[k]);
+
+    const pyHelpers = {
+      int: (v) => {
+        if (typeof v === "string" && !/^\s*[+-]?\d+\s*$/.test(v)) throw new Error("ValueError: invalid literal for int()");
+        const n = parseInt(v, 10);
+        if (Number.isNaN(n)) throw new Error("ValueError: invalid literal for int()");
+        return n;
+      },
+      float: (v) => {
+        const n = Number(v);
+        if (Number.isNaN(n)) throw new Error("ValueError: could not convert to float");
+        return n;
+      },
+      str: (v) => String(v),
+      len: (v) => String(v).length,
+      abs: (v) => Math.abs(v),
+      round: (v, d) => d ? Number(v.toFixed(d)) : Math.round(v),
+      type: (v) => {
+        if (typeof v === "string") return "<class 'str'>";
+        if (typeof v === "number") return Number.isInteger(v) ? "<class 'int'>" : "<class 'float'>";
+        if (typeof v === "boolean") return "<class 'bool'>";
+        return "<class 'object'>";
+      }
+    };
+
+    try {
+      const fn = new Function(
+        ...Object.keys(pyHelpers),
+        ...scopeKeys,
+        `"use strict"; return (${jsExpr});`
+      );
+      const res = fn(...Object.values(pyHelpers), ...scopeVals);
+      if (res === Infinity || res === -Infinity || Number.isNaN(res)) {
+        throw new Error("ZeroDivisionError");
+      }
+      return res;
+    } catch (e) {
+      if (e instanceof ReferenceError) {
+        const m = e.message.match(/(\w+)\s+is not defined/);
+        throw new Error(`NameError: name '${m ? m[1] : ""}' is not defined`);
+      }
+      throw e;
+    }
+  }
+
+  async function evalFloorDiv(expr) {
+    // Split on top-level //
+    let inS = null, depth = 0, idx = -1;
+    for (let i = 0; i < expr.length - 1; i++) {
+      const c = expr[i];
+      if (inS) {
+        if (c === "\\") { i++; continue; }
+        if (c === inS) inS = null;
+      } else {
+        if (c === '"' || c === "'") inS = c;
+        else if (c === "(") depth++;
+        else if (c === ")") depth--;
+        else if (c === "/" && expr[i + 1] === "/" && depth === 0) { idx = i; break; }
+      }
+    }
+    if (idx === -1) return evalExpr(expr.replace(/\/\//g, "/"));
+    const left = await evalExpr(expr.slice(0, idx));
+    const right = await evalExpr(expr.slice(idx + 2));
+    if (right === 0) throw new Error("ZeroDivisionError");
+    return Math.floor(left / right);
+  }
+
+  const lines = code.split(/\r?\n/);
+  for (let lineIdx = 0; lineIdx < lines.length; lineIdx++) {
+    const clean = stripComment(lines[lineIdx]).trim();
+    if (!clean) continue;
+
+    // print(...)
+    if (/^print\s*\(/.test(clean)) {
+      if (!clean.endsWith(")")) throw new Error("SyntaxError: не закрыта скобка ) в print");
+      const inner = clean.slice(clean.indexOf("(") + 1, -1);
+      const args = splitTopLevel(inner, ",");
+      let sep = " ", end = "\n";
+      const outParts = [];
+      for (const a of args) {
+        if (/^sep\s*=/.test(a)) { sep = String(await evalExpr(a.replace(/^sep\s*=/, ""))); }
+        else if (/^end\s*=/.test(a)) { end = String(await evalExpr(a.replace(/^end\s*=/, ""))); }
+        else { outParts.push(String(await evalExpr(a))); }
+      }
+      onOutput(outParts.join(sep) + end);
+      continue;
+    }
+
+    // Check assignment (a = expr or a, b = b, a)
+    let eqPos = -1, inS = null, depth = 0;
+    for (let i = 0; i < clean.length; i++) {
+      const c = clean[i];
+      if (inS) {
+        if (c === "\\") { i++; continue; }
+        if (c === inS) inS = null;
+      } else {
+        if (c === '"' || c === "'") inS = c;
+        else if (c === "(") depth++;
+        else if (c === ")") depth--;
+        else if (c === "=" && depth === 0 && clean[i + 1] !== "=" && clean[i - 1] !== "!" && clean[i - 1] !== "<" && clean[i - 1] !== ">") {
+          eqPos = i; break;
+        }
+      }
+    }
+
+    if (eqPos !== -1) {
+      const lhs = splitTopLevel(clean.slice(0, eqPos), ",");
+      const rhs = splitTopLevel(clean.slice(eqPos + 1), ",");
+      if (lhs.length !== rhs.length) throw new Error("ValueError: количество переменных не совпадает");
+      const vals = [];
+      for (const r of rhs) vals.push(await evalExpr(r));
+      for (let i = 0; i < lhs.length; i++) {
+        if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(lhs[i])) {
+          throw new Error(`SyntaxError: неправильное имя переменной "${lhs[i]}"`);
+        }
+        env[lhs[i]] = vals[i];
+      }
+      continue;
+    }
+
+    // Standalone expression (e.g. Print("...") -> triggers NameError cleanly)
+    await evalExpr(clean);
+  }
+}
+
+/* ============================================================================
+   УНИВЕРСАЛЬНЫЙ ЗАПУСК PYTHON (SKULPT 3 + FALLBACK)
+============================================================================ */
+async function executePython(rawCode, { onOutput, onInput, isTestMode }) {
+  const preparedCode = preprocessFStrings(rawCode);
+
+  if (typeof Sk !== "undefined" && Sk.misceval) {
+    return new Promise((resolve, reject) => {
+      Sk.configure({
+        output: (text) => onOutput(text),
+        read: (x) => {
+          if (Sk.builtinFiles === undefined || Sk.builtinFiles["files"][x] === undefined) {
+            throw "File not found: '" + x + "'";
+          }
+          return Sk.builtinFiles["files"][x];
+        },
+        inputfun: (promptText) => {
+          return new Promise((res) => {
+            Promise.resolve(onInput(promptText || "")).then(val => res(String(val)));
+          });
+        },
+        inputfunTakesPrompt: true,
+        execLimit: 3000,
+        __future__: Sk.python3
+      });
+
+      Sk.misceval.asyncToPromise(() => Sk.importMainWithBody("<stdin>", false, preparedCode, true))
+        .then(() => resolve())
+        .catch((err) => reject(err.toString()));
+    });
+  } else {
+    // Graceful offline JS engine
+    return runFallbackPython(preparedCode, onOutput, onInput);
+  }
+}
+
+/* ============================================================================
+   ИНТЕРАКТИВНЫЙ ВВОД В КОНСОЛИ (БЕЗ БРАУЗЕРНЫХ POPUP)
+============================================================================ */
+function waitForConsoleInput(prefix, promptText) {
+  return new Promise((resolve) => {
+    const row = document.getElementById(prefix + "InputRow");
+    const lbl = document.getElementById(prefix + "InputPrompt");
+    const field = document.getElementById(prefix + "InputField");
+    const btn = document.getElementById(prefix + "InputSend");
+
+    lbl.textContent = promptText ? `⌨️ ${promptText}` : "⌨️ Программа ждёт ввод (input):";
+    field.value = "";
+    row.classList.add("active");
+    setTimeout(() => field.focus(), 40);
+
+    const submit = () => {
+      const val = field.value;
+      row.classList.remove("active");
+      btn.removeEventListener("click", submit);
+      field.removeEventListener("keydown", onKey);
+      resolve(val);
+    };
+
+    const onKey = (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        submit();
+      }
+    };
+
+    btn.addEventListener("click", submit);
+    field.addEventListener("keydown", onKey);
+  });
+}
+
+/* ============================================================================
+   UI: РЕНДЕР И НАВИГАЦИЯ
+============================================================================ */
+function showToast(msg) {
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  clearTimeout(showToast._timer);
+  showToast._timer = setTimeout(() => t.classList.remove("show"), 2600);
+}
+
+function getStats() {
+  let totalTasks = 0, solvedTasks = 0, totalQuizzes = 0, solvedQuizzes = 0;
+  MODULES.forEach(m => {
+    m.tasks.forEach(t => {
+      totalTasks++;
+      if (state.solvedTasks[t.id]) solvedTasks++;
+    });
+    m.quizzes.forEach(q => {
+      totalQuizzes++;
+      if (state.solvedQuizzes[q.id]) solvedQuizzes++;
+    });
+  });
+  const totalSteps = totalTasks + totalQuizzes;
+  const doneSteps = solvedTasks + solvedQuizzes;
+  const xp = solvedTasks * 25 + solvedQuizzes * 10;
+  const pct = totalSteps ? Math.round((doneSteps / totalSteps) * 100) : 0;
+  return { totalTasks, solvedTasks, totalQuizzes, solvedQuizzes, totalSteps, doneSteps, xp, pct };
+}
+
+function updateTopBarAndProgress() {
+  const s = getStats();
+  document.getElementById("xpCount").textContent = s.xp;
+  const firstName = (state.studentName || "").trim().split(/\s+/).slice(-1)[0] || "программист";
+  document.getElementById("heroGreeting").textContent = `Привет, ${firstName}! 👋`;
+  document.getElementById("overallProgressBar").style.width = s.pct + "%";
+  document.getElementById("overallProgressText").textContent = `Пройдено ${s.doneSteps} из ${s.totalSteps} шагов`;
+  document.getElementById("overallProgressPct").textContent = s.pct + "%";
+
+  const engineLabel = skulptReady ? "Python 3" : "Офлайн Python";
+  document.getElementById("engineDot").className = skulptReady ? "engine-dot" : "engine-dot offline";
+  document.getElementById("studentHeaderLabel").textContent = state.studentClass
+    ? `${state.studentClass} • ${engineLabel}`
+    : `${engineLabel} • готов`;
+}
+
+function renderModulesHome() {
+  updateTopBarAndProgress();
+  const container = document.getElementById("modulesList");
+  container.innerHTML = "";
+
+  MODULES.forEach((m, idx) => {
+    const qDone = m.quizzes.filter(q => state.solvedQuizzes[q.id]).length;
+    const tDone = m.tasks.filter(t => state.solvedTasks[t.id]).length;
+    const allDone = qDone === m.quizzes.length && tDone === m.tasks.length;
+    const started = qDone > 0 || tDone > 0;
+
+    let statusClass = "new", statusText = "Начать →";
+    if (allDone) { statusClass = "done"; statusText = "✓ Пройден"; }
+    else if (started) { statusClass = "inprog"; statusText = "В процессе"; }
+
+    const card = document.createElement("div");
+    card.className = "card module-card" + (allDone ? " completed" : "");
+    card.innerHTML = `
+      <div class="module-head">
+        <div>
+          <span class="module-badge ${m.isBonus ? "bonus" : ""}">${m.badge}</span>
+          <h3 class="module-title">${idx + 1}. ${m.title}</h3>
+        </div>
+        <span class="pill-status ${statusClass}">${statusText}</span>
+      </div>
+      <p class="module-desc">${m.desc}</p>
+      <div class="module-stats">
+        <span>⚡ Тест: <strong>${qDone}/${m.quizzes.length}</strong></span>
+        <span>⌨️ Задачи: <strong>${tDone}/${m.tasks.length}</strong></span>
+        <span style="color:var(--primary);font-weight:700;">Открыть ›</span>
+      </div>
+    `;
+    card.addEventListener("click", () => openModule(idx, "theory"));
+    container.appendChild(card);
+  });
+}
+
+function switchView(viewName) {
+  document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
+  document.getElementById("view-" + viewName).classList.add("active");
+
+  document.querySelectorAll(".nav-item").forEach(btn => {
+    btn.classList.toggle("active", btn.dataset.nav === viewName);
+  });
+
+  if (viewName === "home") renderModulesHome();
+  if (viewName === "report") renderReport();
+  window.scrollTo({ top: 0, behavior: "instant" });
+}
+
+function openCurrentPractice() {
+  openModule(state.activeModule || 0, "practice");
+}
+
+function openModule(modIdx, subtab) {
+  state.activeModule = modIdx;
+  state.activeSubtab = subtab || "theory";
+  saveState();
+
+  const mod = MODULES[modIdx];
+  document.getElementById("activeModuleHeading").textContent = `${modIdx + 1}. ${mod.title}`;
+  switchView("module");
+  switchModuleTab(state.activeSubtab);
+}
+
+function switchModuleTab(subtab) {
+  state.activeSubtab = subtab;
+  saveState();
+
+  document.querySelectorAll(".seg-btn").forEach(b => {
+    b.classList.toggle("active", b.dataset.subtab === subtab);
+  });
+
+  document.getElementById("moduleTheoryPane").style.display = subtab === "theory" ? "block" : "none";
+  document.getElementById("moduleQuizPane").style.display = subtab === "quiz" ? "block" : "none";
+  document.getElementById("modulePracticePane").style.display = subtab === "practice" ? "block" : "none";
+
+  if (subtab === "theory") renderTheoryPane();
+  if (subtab === "quiz") renderQuizPane();
+  if (subtab === "practice") renderPracticePane();
+}
+
+function renderTheoryPane() {
+  const mod = MODULES[state.activeModule];
+  const pane = document.getElementById("moduleTheoryPane");
+  pane.innerHTML = "";
+
+  mod.theory.forEach((sec) => {
+    const card = document.createElement("div");
+    card.className = "card theory-card";
+    card.innerHTML = `<h3>${sec.title}</h3>${sec.body}`;
+    if (sec.tryCode) {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "try-btn";
+      btn.textContent = "▶ Попробовать этот пример в Песочнице";
+      btn.addEventListener("click", () => {
+        document.getElementById("sandboxCode").value = sec.tryCode;
+        updateLineNumbers(document.getElementById("sandboxCode"), document.getElementById("sandboxLineNums"));
+        switchView("sandbox");
+        showToast("Пример загружен! Нажми «Запустить скрипт»");
+      });
+      card.appendChild(btn);
+    }
+    pane.appendChild(card);
+  });
+
+  const nextBtn = document.createElement("button");
+  nextBtn.type = "button";
+  nextBtn.className = "btn btn-primary btn-full";
+  nextBtn.textContent = "Всё понятно! Перейти к мини-тесту →";
+  nextBtn.onclick = () => switchModuleTab("quiz");
+  pane.appendChild(nextBtn);
+}
+
+function renderQuizPane() {
+  const mod = MODULES[state.activeModule];
+  const pane = document.getElementById("moduleQuizPane");
+  pane.innerHTML = "";
+
+  mod.quizzes.forEach((q) => {
+    const isSolved = !!state.solvedQuizzes[q.id];
+    const card = document.createElement("div");
+    card.className = "card quiz-q";
+
+    const title = document.createElement("div");
+    title.className = "quiz-q-title";
+    title.style.whiteSpace = "pre-line";
+    title.textContent = q.question;
+    card.appendChild(title);
+
+    const fb = document.createElement("div");
+    fb.className = "quiz-feedback" + (isSolved ? " show ok" : "");
+    if (isSolved) fb.textContent = "✅ Верно! " + q.explain;
+
+    q.options.forEach((optText, optIdx) => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "quiz-opt" + (isSolved && optIdx === q.correct ? " correct" : "");
+      btn.textContent = optText;
+      btn.addEventListener("click", () => {
+        card.querySelectorAll(".quiz-opt").forEach(b => b.classList.remove("wrong", "correct"));
+        if (optIdx === q.correct) {
+          btn.classList.add("correct");
+          fb.className = "quiz-feedback show ok";
+          fb.textContent = "✅ Верно! " + q.explain;
+          if (!state.solvedQuizzes[q.id]) {
+            state.solvedQuizzes[q.id] = true;
+            saveState();
+            updateTopBarAndProgress();
+            showToast("+10 XP за правильный ответ!");
+          }
+        } else {
+          btn.classList.add("wrong");
+          fb.className = "quiz-feedback show err";
+          fb.textContent = "❌ Подумай ещё раз и попробуй другой вариант!";
+        }
+      });
+      card.appendChild(btn);
+    });
+
+    card.appendChild(fb);
+    pane.appendChild(card);
+  });
+
+  const toPractice = document.createElement("button");
+  toPractice.type = "button";
+  toPractice.className = "btn btn-success btn-full";
+  toPractice.textContent = "⌨️ Перейти к практическим задачам →";
+  toPractice.onclick = () => switchModuleTab("practice");
+  pane.appendChild(toPractice);
+}
+
+/* ============================================================================
+   ПРАКТИКА И АВТОПРОВЕРКА ЗАДАЧ
+============================================================================ */
+function getCurrentTask() {
+  const mod = MODULES[state.activeModule];
+  const tIdx = state.activeTaskIdx[state.activeModule] || 0;
+  return mod.tasks[tIdx];
+}
+
+function renderPracticePane() {
+  const mod = MODULES[state.activeModule];
+  const curIdx = state.activeTaskIdx[state.activeModule] || 0;
+
+  // Pills
+  const pillsEl = document.getElementById("taskPills");
+  pillsEl.innerHTML = "";
+  mod.tasks.forEach((t, idx) => {
+    const pill = document.createElement("button");
+    pill.type = "button";
+    const solved = !!state.solvedTasks[t.id];
+    pill.className = "task-pill" + (idx === curIdx ? " active" : "") + (solved ? " solved" : "");
+    pill.textContent = (solved ? "✓ " : "") + `Задача ${state.activeModule + 1}.${idx + 1}`;
+    pill.onclick = () => {
+      state.activeTaskIdx[state.activeModule] = idx;
+      saveState();
+      renderPracticePane();
+    };
+    pillsEl.appendChild(pill);
+  });
+
+  const task = mod.tasks[curIdx];
+  const solved = !!state.solvedTasks[task.id];
+  currentHintStep = 0;
+
+  document.getElementById("taskBadge").textContent = `Задача ${state.activeModule + 1}.${curIdx + 1}`;
+  const stBadge = document.getElementById("taskStatusBadge");
+  stBadge.className = "pill-status " + (solved ? "done" : "new");
+  stBadge.textContent = solved ? "✓ Решена (+25 XP)" : "Не решена";
+
+  document.getElementById("taskTitle").textContent = task.title;
+  document.getElementById("taskDescription").innerHTML = task.desc;
+
+  document.getElementById("hintBox").classList.remove("show");
+  document.getElementById("hintBox").textContent = "";
+  document.getElementById("hintCounter").textContent = `Доступно подсказок: ${task.hints.length}`;
+
+  const ta = document.getElementById("practiceCode");
+  ta.value = state.savedCode[task.id] !== undefined ? state.savedCode[task.id] : task.starter;
+  updateLineNumbers(ta, document.getElementById("practiceLineNums"));
+
+  // Reset console & test banner
+  document.getElementById("practiceConsoleStatus").textContent = "Ожидание запуска";
+  const outEl = document.getElementById("practiceConsoleOut");
+  outEl.style.color = "#64748b";
+  outEl.textContent = "Нажми «▶ Запустить» для теста или «✅ Проверить» для сдачи задачи.";
+  document.getElementById("practiceConsoleErr").style.display = "none";
+  document.getElementById("practiceInputRow").classList.remove("active");
+  document.getElementById("practiceTestResult").classList.remove("show", "pass", "fail");
+  document.getElementById("nextTaskWrap").style.display = solved ? "block" : "none";
+}
+
+function saveCurrentTaskCode() {
+  const task = getCurrentTask();
+  if (!task) return;
+  state.savedCode[task.id] = document.getElementById("practiceCode").value;
+  saveState();
+}
+
+function resetCurrentTaskCode() {
+  const task = getCurrentTask();
+  document.getElementById("practiceCode").value = task.starter;
+  saveCurrentTaskCode();
+  updateLineNumbers(document.getElementById("practiceCode"), document.getElementById("practiceLineNums"));
+  showToast("Код сброшен к шаблону");
+}
+
+function showNextHint() {
+  const task = getCurrentTask();
+  if (currentHintStep >= task.hints.length) {
+    showToast("Все подсказки к этой задаче уже открыты");
+    return;
+  }
+  const box = document.getElementById("hintBox");
+  const text = task.hints[currentHintStep];
+  currentHintStep++;
+  state.hintsUsed++;
+  saveState();
+
+  box.style.whiteSpace = "pre-line";
+  box.textContent = `💡 Подсказка ${currentHintStep}/${task.hints.length}:\n${text}`;
+  box.classList.add("show");
+  document.getElementById("hintCounter").textContent =
+    currentHintStep < task.hints.length
+      ? `Есть ещё подсказка (${currentHintStep}/${task.hints.length})`
+      : "Открыты все подсказки";
+}
+
+async function runPracticeInteractive() {
+  if (isRunning) return;
+  isRunning = true;
+  saveCurrentTaskCode();
+
+  const code = document.getElementById("practiceCode").value;
+  const outEl = document.getElementById("practiceConsoleOut");
+  const errEl = document.getElementById("practiceConsoleErr");
+  const statusEl = document.getElementById("practiceConsoleStatus");
+
+  outEl.style.color = "#e2e8f0";
+  outEl.textContent = "";
+  errEl.style.display = "none";
+  document.getElementById("practiceTestResult").classList.remove("show");
+  statusEl.textContent = "Выполняется...";
+
+  let collected = "";
+  try {
+    await executePython(code, {
+      isTestMode: false,
+      onOutput: (txt) => {
+        collected += txt;
+        outEl.textContent = collected;
+      },
+      onInput: async (promptText) => {
+        statusEl.textContent = "Ждёт ввод...";
+        const val = await waitForConsoleInput("practice", promptText);
+        collected += (promptText ? promptText + " " : "> ") + val + "\n";
+        outEl.textContent = collected;
+        statusEl.textContent = "Выполняется...";
+        return val;
+      }
+    });
+    if (!collected) {
+      outEl.style.color = "#94a3b8";
+      outEl.textContent = "(Скрипт выполнился, но ничего не вывел. Не забыл print?)";
+    }
+    statusEl.textContent = "Готово ✓";
+  } catch (err) {
+    errEl.textContent = translatePythonError(err);
+    errEl.style.display = "block";
+    statusEl.textContent = "Ошибка";
+  } finally {
+    isRunning = false;
+  }
+}
+
+function normalizeLine(line, opts) {
+  let s = String(line).trim().replace(/\s+/g, " ");
+  if (opts && opts.flexibleColon) {
+    s = s.replace(/\s*:\s*/g, ": ");
+  }
+  if (opts && opts.allowExclamation) {
+    s = s.replace(/!+$/, "");
+  }
+  return s;
+}
+
+async function checkPracticeTask() {
+  if (isRunning) return;
+  isRunning = true;
+  saveCurrentTaskCode();
+
+  const task = getCurrentTask();
+  const code = document.getElementById("practiceCode").value;
+  const outEl = document.getElementById("practiceConsoleOut");
+  const errEl = document.getElementById("practiceConsoleErr");
+  const resEl = document.getElementById("practiceTestResult");
+  const statusEl = document.getElementById("practiceConsoleStatus");
+
+  errEl.style.display = "none";
+  resEl.className = "test-result";
+  statusEl.textContent = "Автопроверка...";
+
+  if (!code.trim()) {
+    resEl.className = "test-result show fail";
+    resEl.innerHTML = "❌ Редактор пустой! Напиши решение и нажми «Проверить».";
+    statusEl.textContent = "Пусто";
+    isRunning = false;
+    return;
+  }
+
+  // Structural check if present
+  if (task.codeCheck) {
+    const msg = task.codeCheck(code);
+    if (msg) {
+      resEl.className = "test-result show fail";
+      resEl.innerHTML = "⚠️ " + msg;
+      statusEl.textContent = "Проверь условие";
+      isRunning = false;
+      return;
+    }
+  }
+
+  let allPassed = true;
+  let lastOutput = "";
+  let failReason = "";
+
+  for (let i = 0; i < task.tests.length; i++) {
+    const tc = task.tests[i];
+    let testOut = "";
+    let inputIdx = 0;
+
+    try {
+      await executePython(code, {
+        isTestMode: true,
+        onOutput: (txt) => { testOut += txt; },
+        onInput: async () => {
+          if (inputIdx < tc.inputs.length) return tc.inputs[inputIdx++];
+          return "";
+        }
+      });
+    } catch (err) {
+      allPassed = false;
+      errEl.textContent = translatePythonError(err);
+      errEl.style.display = "block";
+      failReason = "Исправь ошибку в коде (смотри подсказку в консоли выше).";
+      break;
+    }
+
+    lastOutput = testOut;
+    const actualLines = testOut.replace(/\r\n/g, "\n").trimEnd().split("\n").filter((l, idx, arr) => !(arr.length === 1 && l === ""));
+    const expLines = tc.expectedLines;
+
+    let match = actualLines.length === expLines.length;
+    if (match) {
+      for (let li = 0; li < expLines.length; li++) {
+        if (normalizeLine(actualLines[li], tc) !== normalizeLine(expLines[li], tc)) {
+          match = false;
+          break;
+        }
+      }
+    }
+
+    if (!match) {
+      allPassed = false;
+      const inpInfo = tc.inputs.length ? `<br><strong>Входные данные теста:</strong> ${tc.inputs.join(", ")}` : "";
+      failReason = `
+        <strong>Тест ${i + 1} не пройден.</strong>${inpInfo}
+        <br><strong>Ожидалось:</strong><br><code style="white-space:pre;">${escapeHtml(expLines.join("\n"))}</code>
+        <br><strong>Твоя программа вывела:</strong><br><code style="white-space:pre;">${escapeHtml(actualLines.join("\n") || "(пусто)")}</code>
+      `;
+      break;
+    }
+  }
+
+  outEl.style.color = "#e2e8f0";
+  outEl.textContent = lastOutput || "(нет вывода)";
+
+  if (allPassed) {
+    statusEl.textContent = "Все тесты пройдены ✓";
+    const firstTime = !state.solvedTasks[task.id];
+    state.solvedTasks[task.id] = true;
+    saveState();
+    updateTopBarAndProgress();
+
+    resEl.className = "test-result show pass";
+    resEl.innerHTML = firstTime
+      ? "🎉 <strong>Отлично! Задача решена!</strong> Все автотесты пройдены (+25 XP)."
+      : "✅ <strong>Всё верно!</strong> Все автотесты пройдены.";
+
+    document.getElementById("taskStatusBadge").className = "pill-status done";
+    document.getElementById("taskStatusBadge").textContent = "✓ Решена (+25 XP)";
+    document.getElementById("nextTaskWrap").style.display = "block";
+
+    // Refresh pill checkmarks without clearing banner
+    const mod = MODULES[state.activeModule];
+    const curIdx = state.activeTaskIdx[state.activeModule] || 0;
+    document.querySelectorAll("#taskPills .task-pill").forEach((p, idx) => {
+      if (state.solvedTasks[mod.tasks[idx].id]) {
+        p.classList.add("solved");
+        p.textContent = `✓ Задача ${state.activeModule + 1}.${idx + 1}`;
+      }
+    });
+
+    if (firstTime) showToast("🎉 +25 XP! Отличная работа!");
+  } else {
+    statusEl.textContent = "Есть несовпадение";
+    resEl.className = "test-result show fail";
+    resEl.innerHTML = "❌ " + failReason;
+  }
+
+  isRunning = false;
+}
+
+function goNextTask() {
+  const mod = MODULES[state.activeModule];
+  const curIdx = state.activeTaskIdx[state.activeModule] || 0;
+  if (curIdx + 1 < mod.tasks.length) {
+    state.activeTaskIdx[state.activeModule] = curIdx + 1;
+    saveState();
+    renderPracticePane();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  } else if (state.activeModule + 1 < MODULES.length) {
+    showToast("🏆 Модуль пройден! Открываем следующий!");
+    openModule(state.activeModule + 1, "theory");
+  } else {
+    showToast("🏆 Ты прошёл все модули! Смотри свой отчёт!");
+    switchView("report");
+  }
+}
+
+/* ============================================================================
+   ПЕСОЧНИЦА
+============================================================================ */
+const SANDBOX_PRESETS = {
+  hello: `# Твой первый скрипт на Python\nname = input("Как тебя зовут? ")\nprint("Привет,", name + "!")\nprint("Добро пожаловать в мир кода 🐍")`,
+  calc: `# Мини-калькулятор\na = int(input("Первое число: "))\nb = int(input("Второе число: "))\nprint("Сумма:", a + b)\nprint("Произведение:", a * b)\nprint("Целое деление:", a // b)\nprint("Остаток:", a % b)`,
+  quest: `# Мини-анкета 7 класса\nname = input("Твоё имя: ")\ngame = input("Любимая игра или спорт: ")\nage = int(input("Сколько тебе лет? "))\nprint("----------------")\nprint(name, "— фанат", game)\nprint("Через 5 лет тебе будет:", age + 5)`,
+  clear: ""
+};
+
+function loadSandboxPreset(key) {
+  const ta = document.getElementById("sandboxCode");
+  ta.value = SANDBOX_PRESETS[key] || "";
+  updateLineNumbers(ta, document.getElementById("sandboxLineNums"));
+}
+
+async function runSandbox() {
+  if (isRunning) return;
+  isRunning = true;
+
+  const code = document.getElementById("sandboxCode").value;
+  const outEl = document.getElementById("sandboxConsoleOut");
+  const errEl = document.getElementById("sandboxConsoleErr");
+  const statusEl = document.getElementById("sandboxConsoleStatus");
+
+  outEl.style.color = "#e2e8f0";
+  outEl.textContent = "";
+  errEl.style.display = "none";
+  statusEl.textContent = "Выполняется...";
+
+  let collected = "";
+  try {
+    await executePython(code, {
+      isTestMode: false,
+      onOutput: (txt) => {
+        collected += txt;
+        outEl.textContent = collected;
+      },
+      onInput: async (promptText) => {
+        statusEl.textContent = "Ждёт ввод...";
+        const val = await waitForConsoleInput("sandbox", promptText);
+        collected += (promptText ? promptText + " " : "> ") + val + "\n";
+        outEl.textContent = collected;
+        statusEl.textContent = "Выполняется...";
+        return val;
+      }
+    });
+    if (!collected) {
+      outEl.style.color = "#94a3b8";
+      outEl.textContent = "(Скрипт завершился без вывода)";
+    }
+    statusEl.textContent = "Готово ✓";
+  } catch (err) {
+    errEl.textContent = translatePythonError(err);
+    errEl.style.display = "block";
+    statusEl.textContent = "Ошибка";
+  } finally {
+    isRunning = false;
+  }
+}
+
+/* ============================================================================
+   ОТЧЁТ И ОЦЕНКА ДЛЯ УЧИТЕЛЯ
+============================================================================ */
+function computeVerificationCode(name, cls, solvedTasks, solvedQuizzes, xp) {
+  const str = `${name}|${cls}|${solvedTasks}|${solvedQuizzes}|${xp}|PY7`;
+  let h = 5381;
+  for (let i = 0; i < str.length; i++) {
+    h = ((h << 5) + h + str.charCodeAt(i)) >>> 0;
+  }
+  return "PY7-" + h.toString(36).toUpperCase().padStart(6, "0");
+}
+
+function getGradeInfo(s) {
+  // Base calculation: 2 mandatory lessons (Modules 1 & 2 = 8 tasks + 6 quizzes = 14 steps) give a solid 5!
+  // Completing Module 3 gives 5+ (100%+ mastery).
+  const coreTasks = MODULES[0].tasks.concat(MODULES[1].tasks).filter(t => state.solvedTasks[t.id]).length;
+  const bonusTasks = MODULES[2].tasks.filter(t => state.solvedTasks[t.id]).length;
+
+  if (s.solvedTasks >= 10 || (coreTasks >= 7 && bonusTasks >= 1)) {
+    return { grade: "5", cls: "", caption: "Отличный результат! Уверенный старт в Python 🏆" };
+  }
+  if (s.solvedTasks >= 7 || (coreTasks >= 6 && s.solvedQuizzes >= 5)) {
+    return { grade: "5", cls: "", caption: "Отлично! Базовые уроки 1–2 полностью освоены ⭐" };
+  }
+  if (s.solvedTasks >= 4) {
+    return { grade: "4", cls: "g4", caption: "Хорошо! Продолжай решать задачи до «пятёрки» 💪" };
+  }
+  if (s.solvedTasks >= 2 || s.solvedQuizzes >= 3) {
+    return { grade: "3", cls: "g3", caption: "Хорошее начало! Реши ещё пару практических задач." };
+  }
+  return { grade: "—", cls: "g2", caption: "Реши хотя бы 2 задачи, чтобы получить оценку." };
+}
+
+function renderReport() {
+  const s = getStats();
+  const g = getGradeInfo(s);
+
+  document.getElementById("repStudentName").textContent = state.studentName || "Ученик не указан";
+  document.getElementById("repStudentClass").textContent = "Класс: " + (state.studentClass || "—");
+
+  const gc = document.getElementById("repGradeCircle");
+  gc.className = "grade-circle " + g.cls;
+  gc.textContent = g.grade;
+  document.getElementById("repGradeCaption").textContent = g.caption;
+
+  document.getElementById("repTasksVal").textContent = `${s.solvedTasks} / ${s.totalTasks}`;
+  document.getElementById("repQuizzesVal").textContent = `${s.solvedQuizzes} / ${s.totalQuizzes}`;
+  document.getElementById("repXpVal").textContent = `${s.xp} XP`;
+  document.getElementById("repHintsVal").textContent = String(state.hintsUsed);
+
+  const hb = document.getElementById("repHonestyBadge");
+  if (state.tabSwitches <= 2) {
+    hb.className = "honesty-badge ok";
+    hb.textContent = `🛡 Самостоятельно (уходов со вкладки: ${state.tabSwitches})`;
+  } else if (state.tabSwitches <= 6) {
+    hb.className = "honesty-badge warn";
+    hb.textContent = `⚠️ Переключения вкладок: ${state.tabSwitches}`;
+  } else {
+    hb.className = "honesty-badge alert";
+    hb.textContent = `🚨 Частые уходы со вкладки: ${state.tabSwitches}`;
+  }
+
+  let breakdownHtml = "";
+  MODULES.forEach((m, i) => {
+    const td = m.tasks.filter(t => state.solvedTasks[t.id]).length;
+    const qd = m.quizzes.filter(q => state.solvedQuizzes[q.id]).length;
+    breakdownHtml += `
+      <div style="display:flex;justify-content:space-between;padding:4px 0;${i < MODULES.length - 1 ? "border-bottom:1px solid #f1f5f9;" : ""}">
+        <span><strong>М${i + 1}.</strong> ${m.title}</span>
+        <span style="white-space:nowrap;font-weight:700;color:${td === m.tasks.length ? "#059669" : "#334155"};">Задачи ${td}/${m.tasks.length} • Тест ${qd}/${m.quizzes.length}</span>
+      </div>
+    `;
+  });
+  document.getElementById("repModuleBreakdown").innerHTML = breakdownHtml;
+
+  const code = computeVerificationCode(state.studentName, state.studentClass, s.solvedTasks, s.solvedQuizzes, s.xp);
+  document.getElementById("repVerifyCode").textContent = "КОД ПРОВЕРКИ: " + code;
+  document.getElementById("repTimestamp").textContent = "Обновлено: " + new Date().toLocaleString("ru-RU");
+
+  if (GOOGLE_SCRIPT_URL) {
+    document.getElementById("sendSheetBtn").style.display = "inline-flex";
+  }
+}
+
+function copyReportText() {
+  const s = getStats();
+  const g = getGradeInfo(s);
+  const code = computeVerificationCode(state.studentName, state.studentClass, s.solvedTasks, s.solvedQuizzes, s.xp);
+  const modLines = MODULES.map((m, i) => {
+    const td = m.tasks.filter(t => state.solvedTasks[t.id]).length;
+    const qd = m.quizzes.filter(q => state.solvedQuizzes[q.id]).length;
+    return `• М${i + 1} (${m.title}): задачи ${td}/${m.tasks.length}, тест ${qd}/${m.quizzes.length}`;
+  }).join("\n");
+
+  const text = [
+    `🐍 ПайтонЛаб 7 — Отчёт ученика`,
+    `👤 ${state.studentName} (${state.studentClass})`,
+    `🏆 Оценка: ${g.grade} | Опыт: ${s.xp} XP`,
+    `✅ Задачи: ${s.solvedTasks}/${s.totalTasks} | Тесты: ${s.solvedQuizzes}/${s.totalQuizzes}`,
+    modLines,
+    `💡 Подсказок: ${state.hintsUsed} | Переключений вкладок: ${state.tabSwitches}`,
+    `🔐 Код: ${code}`
+  ].join("\n");
+
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(() => showToast("📋 Отчёт скопирован! Отправь учителю."));
+  } else {
+    const tmp = document.createElement("textarea");
+    tmp.value = text;
+    document.body.appendChild(tmp);
+    tmp.select();
+    document.execCommand("copy");
+    document.body.removeChild(tmp);
+    showToast("📋 Отчёт скопирован!");
+  }
+}
+
+async function sendToGoogleSheet() {
+  if (!GOOGLE_SCRIPT_URL) return;
+  const s = getStats();
+  const g = getGradeInfo(s);
+  const code = computeVerificationCode(state.studentName, state.studentClass, s.solvedTasks, s.solvedQuizzes, s.xp);
+  const btn = document.getElementById("sendSheetBtn");
+  btn.disabled = true;
+  btn.textContent = "Отправка...";
+  try {
+    await fetch(GOOGLE_SCRIPT_URL, {
+      method: "POST",
+      mode: "no-cors",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: state.studentName,
+        gradeClass: state.studentClass,
+        mark: g.grade,
+        tasks: `${s.solvedTasks}/${s.totalTasks}`,
+        quizzes: `${s.solvedQuizzes}/${s.totalQuizzes}`,
+        xp: s.xp,
+        hints: state.hintsUsed,
+        tabSwitches: state.tabSwitches,
+        verifyCode: code,
+        timestamp: new Date().toISOString()
+      })
+    });
+    showToast("✅ Отчёт отправлен в журнал учителя!");
+  } catch (e) {
+    showToast("⚠️ Не удалось отправить. Скопируй отчёт кнопкой выше.");
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "📤 Отправить в журнал учителя";
+  }
+}
+
+/* ============================================================================
+   ПРОФИЛЬ И АНТИ-ЧИТ
+============================================================================ */
+let selectedCls = state.studentClass || "";
+
+function initLoginModal() {
+  const modal = document.getElementById("loginModal");
+  const nameInp = document.getElementById("studentNameInput");
+  const clsBtns = document.querySelectorAll(".class-btn");
+
+  clsBtns.forEach(b => {
+    b.addEventListener("click", () => {
+      clsBtns.forEach(x => x.classList.remove("selected"));
+      b.classList.add("selected");
+      selectedCls = b.dataset.cls;
+    });
+  });
+
+  document.getElementById("startBtn").addEventListener("click", () => {
+    const nm = nameInp.value.trim();
+    if (nm.length < 3) {
+      showToast("Введи Фамилию и Имя (минимум 3 буквы)");
+      nameInp.focus();
+      return;
+    }
+    if (!selectedCls) {
+      showToast("Выбери свой класс (7А–7Л)");
+      return;
+    }
+    state.studentName = nm;
+    state.studentClass = selectedCls;
+    saveState();
+    modal.classList.add("hidden");
+    renderModulesHome();
+    showToast(`Добро пожаловать, ${nm}!`);
+  });
+
+  if (state.studentName && state.studentClass) {
+    modal.classList.add("hidden");
+  } else {
+    nameInp.value = state.studentName || "";
+    clsBtns.forEach(b => b.classList.toggle("selected", b.dataset.cls === selectedCls));
+  }
+}
+
+function openChangeProfile() {
+  const modal = document.getElementById("loginModal");
+  document.getElementById("studentNameInput").value = state.studentName || "";
+  selectedCls = state.studentClass || "";
+  document.querySelectorAll(".class-btn").forEach(b => b.classList.toggle("selected", b.dataset.cls === selectedCls));
+  modal.classList.remove("hidden");
+}
+
+function confirmResetProgress() {
+  if (confirm("Точно сбросить весь прогресс и начать курс заново?")) {
+    const nm = state.studentName, cls = state.studentClass;
+    state = createDefaultState();
+    state.studentName = nm;
+    state.studentClass = cls;
+    saveState();
+    renderModulesHome();
+    renderReport();
+    showToast("Прогресс сброшен");
+  }
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+/* ============================================================================
+   ИНИЦИАЛИЗАЦИЯ ПРИ ЗАГРУЗКЕ
+============================================================================ */
+window.addEventListener("DOMContentLoaded", () => {
+  buildSymbolBar("practiceSymbolBar", "practiceCode", "practiceLineNums");
+  buildSymbolBar("sandboxSymbolBar", "sandboxCode", "sandboxLineNums");
+
+  const pCode = document.getElementById("practiceCode");
+  const sCode = document.getElementById("sandboxCode");
+
+  pCode.addEventListener("input", () => {
+    updateLineNumbers(pCode, document.getElementById("practiceLineNums"));
+    saveCurrentTaskCode();
+  });
+
+  // Soft anti-cheat: disable pasting ready solutions into graded practice tasks
+  pCode.addEventListener("paste", (e) => {
+    e.preventDefault();
+    showToast("✍️ В задачах код пишем сами — вставка отключена!");
+  });
+
+  // Tab key support for tablets/desktops
+  [pCode, sCode].forEach((ta, i) => {
+    const ln = document.getElementById(i === 0 ? "practiceLineNums" : "sandboxLineNums");
+    ta.addEventListener("keydown", (e) => {
+      if (e.key === "Tab") {
+        e.preventDefault();
+        insertAtCursor(ta, "    ", 0);
+        updateLineNumbers(ta, ln);
+        if (i === 0) saveCurrentTaskCode();
+      }
+    });
+  });
+
+  sCode.addEventListener("input", () => {
+    updateLineNumbers(sCode, document.getElementById("sandboxLineNums"));
+  });
+
+  // Track tab switches gently (only after login)
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden && state.studentName) {
+      state.tabSwitches++;
+      saveState();
+    }
+  });
+
+  // Preload friendly sandbox starter
+  loadSandboxPreset("hello");
+
+  // Detect Skulpt availability
+  setTimeout(() => {
+    skulptReady = typeof Sk !== "undefined";
+    updateTopBarAndProgress();
+  }, 900);
+
+  initLoginModal();
+  renderModulesHome();
+});
+
+window.addEventListener("load", () => {
+  skulptReady = typeof Sk !== "undefined";
+  updateTopBarAndProgress();
+});
+</script>
+</body>
+</html>
