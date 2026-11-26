@@ -164,7 +164,49 @@ const codeB = hashCode("Асанов Тимур", "7А", 11, 4, 315, ["5", "4", 
 if (codeA === codeB) fail("verify code did not change when the mark inputs changed");
 if (!/^PY7-[0-9A-Z]{6}$/.test(codeA)) fail("verify code shape " + codeA);
 
+const allowedQuotes = { "Калькулятор math": true, "Итог": true };
+chapters.forEach(function (ch) {
+  const names = [];
+  (ch.theory || []).forEach(function (card) { names.push(String(card.title || "")); });
+  (ch.tasks || []).forEach(function (task) { names.push(String(task.title || "")); });
+  (ch.plan || []).forEach(function (item) {
+    const re = /«([^»]+)»/g;
+    let found;
+    while ((found = re.exec(item.do))) {
+      if (allowedQuotes[found[1]]) continue;
+      if (!names.some(function (name) { return name.indexOf(found[1]) !== -1; })) {
+        fail(ch.id + " урок " + item.n + " ссылается на «" + found[1] + "», такого названия нет");
+      }
+    }
+  });
+  (ch.quizzes || []).forEach(function (quiz) {
+    if (!quiz.options || quiz.correct < 0 || quiz.correct >= quiz.options.length) fail(quiz.id + " bad correct");
+  });
+  (ch.theory || []).forEach(function (card) {
+    if (!card.trace || !card.trace.code) return;
+    const trace = context.PyEngine.buildTrace(card.trace.code, { inputs: card.trace.inputs || [] });
+    const bad = (trace.steps || []).filter(function (step) { return step.error; });
+    if (bad.length) fail(ch.id + " trace «" + card.title + "»: " + bad[0].error);
+  });
+});
+const css = fs.readFileSync(path.join(root, "css/style.css"), "utf8");
+if (!/\.icon-btn\s*\{[^}]*width:\s*44px/.test(css)) fail("Parsons buttons are not 44px");
+if (!/\.tracer-controls \.btn\s*\{[^}]*min-height:\s*44px/.test(css)) fail("tracer buttons are under 44px");
+if (!/\.symbol-bar\s*\{[^}]*overflow-x:\s*auto/.test(css)) fail("symbol bar does not scroll");
+["name:", "gradeClass:", "mark:", "g1:", "g2:", "g3:", "g4:", "g5:", "g6:", "g7:", "tasks:", "quizzes:", "xp:", "hints:", "tabSwitches:", "verifyCode:"].forEach(function (key) {
+  if (app.indexOf(key) === -1) fail("sheet field missing " + key);
+});
+
 (async function () {
+  for (let ci = 0; ci < chapters.length; ci++) {
+    const ch = chapters[ci];
+    for (let ti = 0; ti < (ch.theory || []).length; ti++) {
+      const sample = ch.theory[ti].tryCode;
+      if (!sample) continue;
+      const run = await context.PyEngine.runTests(sample, [{ inputs: ["2", "10", "20"], expectedLines: [] }]);
+      if (run.kind === "error") fail(ch.id + " example «" + ch.theory[ti].title + "» failed: " + run.error);
+    }
+  }
   let passed = 0;
   let caught = 0;
   for (let ci = 0; ci < chapters.length; ci++) {
