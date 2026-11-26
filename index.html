@@ -915,6 +915,24 @@
     .honesty-badge.warn { background: var(--accent-soft); color: #92400e; }
     .honesty-badge.alert { background: var(--danger-soft); color: #991b1b; }
 
+    .mini-grade {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 24px;
+      height: 24px;
+      padding: 0 6px;
+      border-radius: 7px;
+      font-weight: 900;
+      font-size: 13px;
+      color: #fff;
+      background: #94a3b8;
+      margin-left: 6px;
+    }
+    .mini-grade.m5 { background: #10b981; }
+    .mini-grade.m4 { background: #2563eb; }
+    .mini-grade.m3 { background: #f59e0b; }
+
     .verify-code {
       font-family: ui-monospace, monospace;
       font-size: 12px;
@@ -1115,7 +1133,12 @@
         <button type="button" class="class-btn" data-cls="7Б">7Б</button>
         <button type="button" class="class-btn" data-cls="7В">7В</button>
         <button type="button" class="class-btn" data-cls="7Г">7Г</button>
+        <button type="button" class="class-btn" data-cls="7Д">7Д</button>
+        <button type="button" class="class-btn" data-cls="7Е">7Е</button>
+        <button type="button" class="class-btn" data-cls="7Ж">7Ж</button>
+        <button type="button" class="class-btn" data-cls="7И">7И</button>
         <button type="button" class="class-btn" data-cls="7Л">7Л</button>
+        <button type="button" class="class-btn" data-cls="7Н">7Н</button>
       </div>
     </div>
 
@@ -2923,9 +2946,18 @@ function computeVerificationCode(name, cls, solvedTasks, solvedQuizzes, xp) {
   return "PY7-" + h.toString(36).toUpperCase().padStart(6, "0");
 }
 
+function getModuleGrade(mod) {
+  const td = mod.tasks.filter(t => state.solvedTasks[t.id]).length;
+  const qd = mod.quizzes.filter(q => state.solvedQuizzes[q.id]).length;
+  if (td >= 4 || (td >= 3 && qd >= 3)) return { grade: "5", cls: "m5" };
+  if (td >= 3 || (td >= 2 && qd >= 2)) return { grade: "4", cls: "m4" };
+  if (td >= 2 || (td >= 1 && qd >= 2) || qd >= 3) return { grade: "3", cls: "m3" };
+  return { grade: "—", cls: "" };
+}
+
 function getGradeInfo(s) {
-  // Base calculation: 2 mandatory lessons (Modules 1 & 2 = 8 tasks + 6 quizzes = 14 steps) give a solid 5!
-  // Completing Module 3 gives 5+ (100%+ mastery).
+  const m1 = getModuleGrade(MODULES[0]);
+  const m2 = getModuleGrade(MODULES[1]);
   const coreTasks = MODULES[0].tasks.concat(MODULES[1].tasks).filter(t => state.solvedTasks[t.id]).length;
   const bonusTasks = MODULES[2].tasks.filter(t => state.solvedTasks[t.id]).length;
 
@@ -2933,7 +2965,10 @@ function getGradeInfo(s) {
     return { grade: "5", cls: "", caption: "Отличный результат! Уверенный старт в Python 🏆" };
   }
   if (s.solvedTasks >= 7 || (coreTasks >= 6 && s.solvedQuizzes >= 5)) {
-    return { grade: "5", cls: "", caption: "Отлично! Базовые уроки 1–2 полностью освоены ⭐" };
+    return { grade: "5", cls: "", caption: "Отлично! Оба базовых урока полностью освоены ⭐" };
+  }
+  if (m1.grade === "5" && m2.grade === "—") {
+    return { grade: "4", cls: "g4", caption: "Урок 1 закрыт на «5»! Пройди Урок 2 для общей «5» за курс 💪" };
   }
   if (s.solvedTasks >= 4) {
     return { grade: "4", cls: "g4", caption: "Хорошо! Продолжай решать задачи до «пятёрки» 💪" };
@@ -2973,14 +3008,18 @@ function renderReport() {
     hb.textContent = `🚨 Частые уходы со вкладки: ${state.tabSwitches}`;
   }
 
-  let breakdownHtml = "";
+  let breakdownHtml = `<div style="font-size:11.5px;font-weight:800;color:var(--text-muted);text-transform:uppercase;margin-bottom:6px;">Оценка по каждому уроку</div>`;
   MODULES.forEach((m, i) => {
     const td = m.tasks.filter(t => state.solvedTasks[t.id]).length;
     const qd = m.quizzes.filter(q => state.solvedQuizzes[q.id]).length;
+    const mg = getModuleGrade(m);
     breakdownHtml += `
-      <div style="display:flex;justify-content:space-between;padding:4px 0;${i < MODULES.length - 1 ? "border-bottom:1px solid #f1f5f9;" : ""}">
-        <span><strong>М${i + 1}.</strong> ${m.title}</span>
-        <span style="white-space:nowrap;font-weight:700;color:${td === m.tasks.length ? "#059669" : "#334155"};">Задачи ${td}/${m.tasks.length} • Тест ${qd}/${m.quizzes.length}</span>
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 0;${i < MODULES.length - 1 ? "border-bottom:1px solid #f1f5f9;" : ""}">
+        <div style="min-width:0;">
+          <div style="font-weight:700;">Урок ${i + 1}. ${m.title}</div>
+          <div style="font-size:12px;color:var(--text-muted);">Задачи ${td}/${m.tasks.length} • Тест ${qd}/${m.quizzes.length}</div>
+        </div>
+        <span class="mini-grade ${mg.cls}">${mg.grade}</span>
       </div>
     `;
   });
@@ -3002,13 +3041,14 @@ function copyReportText() {
   const modLines = MODULES.map((m, i) => {
     const td = m.tasks.filter(t => state.solvedTasks[t.id]).length;
     const qd = m.quizzes.filter(q => state.solvedQuizzes[q.id]).length;
-    return `• М${i + 1} (${m.title}): задачи ${td}/${m.tasks.length}, тест ${qd}/${m.quizzes.length}`;
+    const mg = getModuleGrade(m);
+    return `• Урок ${i + 1} (${m.title}): оценка ${mg.grade} (задачи ${td}/${m.tasks.length}, тест ${qd}/${m.quizzes.length})`;
   }).join("\n");
 
   const text = [
     `🐍 ПайтонЛаб 7 — Отчёт ученика`,
     `👤 ${state.studentName} (${state.studentClass})`,
-    `🏆 Оценка: ${g.grade} | Опыт: ${s.xp} XP`,
+    `🏆 Общая оценка: ${g.grade} | Опыт: ${s.xp} XP`,
     `✅ Задачи: ${s.solvedTasks}/${s.totalTasks} | Тесты: ${s.solvedQuizzes}/${s.totalQuizzes}`,
     modLines,
     `💡 Подсказок: ${state.hintsUsed} | Переключений вкладок: ${state.tabSwitches}`,
@@ -3032,6 +3072,9 @@ async function sendToGoogleSheet() {
   if (!GOOGLE_SCRIPT_URL) return;
   const s = getStats();
   const g = getGradeInfo(s);
+  const m1 = getModuleGrade(MODULES[0]).grade;
+  const m2 = getModuleGrade(MODULES[1]).grade;
+  const m3 = getModuleGrade(MODULES[2]).grade;
   const code = computeVerificationCode(state.studentName, state.studentClass, s.solvedTasks, s.solvedQuizzes, s.xp);
   const btn = document.getElementById("sendSheetBtn");
   btn.disabled = true;
@@ -3045,6 +3088,9 @@ async function sendToGoogleSheet() {
         name: state.studentName,
         gradeClass: state.studentClass,
         mark: g.grade,
+        m1Mark: m1,
+        m2Mark: m2,
+        m3Mark: m3,
         tasks: `${s.solvedTasks}/${s.totalTasks}`,
         quizzes: `${s.solvedQuizzes}/${s.totalQuizzes}`,
         xp: s.xp,
@@ -3089,7 +3135,7 @@ function initLoginModal() {
       return;
     }
     if (!selectedCls) {
-      showToast("Выбери свой класс (7А–7Л)");
+      showToast("Выбери свой класс (7А–7Н)");
       return;
     }
     state.studentName = nm;
@@ -3198,4 +3244,4 @@ window.addEventListener("load", () => {
 });
 </script>
 </body>
-</html>
+  </html>
