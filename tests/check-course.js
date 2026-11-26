@@ -19,6 +19,18 @@ function assert(cond, msg) {
 assert(chapters.length === 7, "7 chapters");
 const lessons = chapters.reduce(function (sum, ch) { return sum + ch.lessonCount; }, 0);
 assert(lessons === 27, "27 lessons, got " + lessons);
+const planNumbers = [];
+chapters.forEach(function (ch) {
+  assert(ch.plan && ch.plan.length === ch.lessonCount, ch.id + " plan length");
+  ch.plan.forEach(function (item) {
+    assert(item.n && item.title && item.do, ch.id + " plan item");
+    planNumbers.push(Number(item.n));
+  });
+});
+assert(planNumbers.length === 27 && planNumbers[0] === 21 && planNumbers[26] === 47, "lessons 21-47");
+for (let i = 1; i < planNumbers.length; i++) {
+  assert(planNumbers[i] === planNumbers[i - 1] + 1, "lesson gap at " + planNumbers[i]);
+}
 assert(chapters[0].lessons === "21–22" && chapters[1].lessons === "23–24" && chapters[2].lessons === "25–26", "lesson ranges");
 assert(chapters[3].comingSoon === false && chapters[3].tasks.length === 5 && chapters[3].quizzes.length === 4, "chapter 4 ready");
 assert(chapters[3].tasks[0].type === "parsons" && chapters[3].tasks[4].variant === true, "chapter 4 task types");

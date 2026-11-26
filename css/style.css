@@ -360,6 +360,34 @@
     }
 
     /* Theory Cards */
+    .lesson-plan h3 {
+      margin: 0 0 6px;
+      font-size: 16px;
+      font-weight: 800;
+    }
+
+    .lesson-plan p {
+      margin: 0 0 8px;
+      color: var(--text-muted);
+      font-size: 13px;
+    }
+
+    .lesson-plan ol {
+      margin: 0;
+      padding-left: 1.15em;
+    }
+
+    .lesson-plan li {
+      margin: 0 0 8px;
+      font-size: 13.5px;
+      line-height: 1.35;
+      overflow-wrap: anywhere;
+    }
+
+    .lesson-plan li strong {
+      display: block;
+    }
+
     .theory-card h3 {
       margin: 0 0 8px;
       font-size: 16px;

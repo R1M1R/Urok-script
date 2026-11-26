@@ -446,6 +446,8 @@
       ));
       return;
     }
+    const plan = renderLessonPlan(chapter);
+    if (plan) pane.appendChild(plan);
     chapter.theory.forEach(function (section) {
       const card = document.createElement("div");
       card.className = "card theory-card";
@@ -473,6 +475,30 @@
     next.textContent = "Всё понятно! К мини-тесту";
     next.addEventListener("click", function () { switchModuleTab("quiz"); });
     pane.appendChild(next);
+  }
+
+  function renderLessonPlan(chapter) {
+    const items = chapter.plan || [];
+    if (!items.length) return null;
+    const card = document.createElement("div");
+    card.className = "card lesson-plan";
+    const heading = document.createElement("h3");
+    heading.textContent = "📅 План уроков";
+    const note = document.createElement("p");
+    note.textContent = "Один пункт — один урок. Фраза «если успели» — запас для тех, кто закончил раньше, на оценку она тоже идёт.";
+    const list = document.createElement("ol");
+    items.forEach(function (item) {
+      const row = document.createElement("li");
+      const title = document.createElement("strong");
+      title.textContent = "Урок " + item.n + ". " + item.title;
+      row.appendChild(title);
+      row.appendChild(document.createTextNode(item.do));
+      list.appendChild(row);
+    });
+    card.appendChild(heading);
+    card.appendChild(note);
+    card.appendChild(list);
+    return card;
   }
 
   function mountTracer(host, spec) {
