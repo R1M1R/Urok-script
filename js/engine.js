@@ -417,10 +417,15 @@ async function executePython(rawCode, { onOutput, onInput, isTestMode }) {
     return true;
   }
 
+  function foldCase(value) {
+    return String(value).toLocaleLowerCase("ru-RU").replace(/ё/g, "е");
+  }
+
   function linesEqual(actual, expected, opts) {
     const a = normalizeLine(actual, opts);
     const e = normalizeLine(expected, opts);
     if (a === e) return true;
+    if (opts && opts.ignoreCase && foldCase(a) === foldCase(e)) return true;
     if (opts && opts.numericMatch) {
       const tol = typeof opts.floatTolerance === "number" ? opts.floatTolerance : DEFAULT_FLOAT_TOLERANCE;
       return numericTokensEqual(a, e, tol);
@@ -794,6 +799,45 @@ async function executePython(rawCode, { onOutput, onInput, isTestMode }) {
     return String(v);
   }
 
+  function truthy(value) {
+    if (value === false || value === null || value === undefined) return false;
+    if (typeof value === "number") return value !== 0 && !Number.isNaN(value);
+    if (typeof value === "string") return value.length > 0;
+    return true;
+  }
+
+  function findLogicWord(expr, word) {
+    let depth = 0;
+    let inS = null;
+    let found = -1;
+    for (let i = 0; i < expr.length; i++) {
+      const ch = expr[i];
+      if (inS) {
+        if (ch === "\\") { i++; continue; }
+        if (ch === inS) inS = null;
+        continue;
+      }
+      if (ch === '"' || ch === "'") { inS = ch; continue; }
+      if (ch === "(") { depth++; continue; }
+      if (ch === ")") { depth--; continue; }
+      if (depth !== 0) continue;
+      if (!expr.startsWith(word, i)) continue;
+      const beforeOk = i === 0 || !/[A-Za-z0-9_]/.test(expr[i - 1]);
+      const afterOk = i + word.length >= expr.length || !/[A-Za-z0-9_]/.test(expr[i + word.length]);
+      if (beforeOk && afterOk) found = i;
+    }
+    return found;
+  }
+
+  function splitLogic(expr, word) {
+    const at = findLogicWord(expr, word);
+    if (at < 0) return null;
+    const left = expr.slice(0, at).trim();
+    const right = expr.slice(at + word.length).trim();
+    if (!left || !right) throw new Error("SyntaxError: пустая часть у " + word);
+    return { left: left, right: right };
+  }
+
   function evalExprSync(expr, env, readInput) {
     expr = String(expr).trim();
     if (!expr) throw new Error("SyntaxError: пустое выражение");
@@ -843,6 +887,25 @@ async function executePython(rawCode, { onOutput, onInput, isTestMode }) {
     if (isCompleteString(expr)) return unquote(expr);
     if (/^[+-]?\d+$/.test(expr)) return parseInt(expr, 10);
     if (/^[+-]?\d+\.\d+$/.test(expr)) return parseFloat(expr);
+    if (expr === "True") return true;
+    if (expr === "False") return false;
+
+    const orSplit = splitLogic(expr, "or");
+    if (orSplit) {
+      const left = evalExprSync(orSplit.left, env, readInput);
+      if (truthy(left)) return left;
+      return evalExprSync(orSplit.right, env, readInput);
+    }
+    const andSplit = splitLogic(expr, "and");
+    if (andSplit) {
+      const left = evalExprSync(andSplit.left, env, readInput);
+      if (!truthy(left)) return left;
+      return evalExprSync(andSplit.right, env, readInput);
+    }
+    if (/^not(\s|\()/.test(expr)) {
+      return !truthy(evalExprSync(expr.replace(/^not\s*/, ""), env, readInput));
+    }
+
     if (/^[A-Za-z_][A-Za-z0-9_]*$/.test(expr)) {
       if (!Object.prototype.hasOwnProperty.call(env, expr)) {
         throw new Error("NameError: name '" + expr + "' is not defined");
@@ -882,6 +945,18 @@ async function executePython(rawCode, { onOutput, onInput, isTestMode }) {
       return "print показывает результат на экране.";
     }
 
+    const aug = clean.match(/^([A-Za-z_]\w*)\s*(\+=|-=)\s*(.+)$/);
+    if (aug) {
+      if (!Object.prototype.hasOwnProperty.call(env, aug[1])) {
+        throw new Error("NameError: name '" + aug[1] + "' is not defined");
+      }
+      const rhs = evalExprSync(aug[3], env, readInput);
+      env[aug[1]] = applyOp(aug[2] === "+=" ? "+" : "-", env[aug[1]], rhs);
+      return aug[2] === "+="
+        ? "Прибавили к " + aug[1] + ". Теперь там " + formatPy(env[aug[1]]) + "."
+        : "Уменьшили " + aug[1] + ". Теперь там " + formatPy(env[aug[1]]) + ".";
+    }
+
     const eq = findAssignEq(clean);
     if (eq !== -1) {
       const lhs = splitTopComma(clean.slice(0, eq));
@@ -904,6 +979,28 @@ async function executePython(rawCode, { onOutput, onInput, isTestMode }) {
     return "Эта строка выполнилась.";
   }
 
+  function indentUnits(raw) {
+    let spaces = 0;
+    for (let i = 0; i < raw.length; i++) {
+      if (raw[i] === " ") spaces += 1;
+      else if (raw[i] === "\t") spaces += 4;
+      else break;
+    }
+    return Math.floor(spaces / 4);
+  }
+
+  function parseClause(clean) {
+    let match = clean.match(/^if\s+([\s\S]+):\s*$/);
+    if (match) return { kind: "if", cond: match[1].trim() };
+    if (/^if\b/.test(clean)) throw new Error("SyntaxError: после if нужно условие и двоеточие");
+    match = clean.match(/^elif\s+([\s\S]+):\s*$/);
+    if (match) return { kind: "elif", cond: match[1].trim() };
+    if (/^elif\b/.test(clean)) throw new Error("SyntaxError: после elif нужно условие и двоеточие");
+    if (/^else\s*:\s*$/.test(clean)) return { kind: "else" };
+    if (/^else\b/.test(clean)) throw new Error("SyntaxError: после else нужно двоеточие");
+    return null;
+  }
+
   function buildTrace(code, options) {
     const opts = options || {};
     const inputs = (opts.inputs || []).map(function (item) { return String(item); });
@@ -911,6 +1008,7 @@ async function executePython(rawCode, { onOutput, onInput, isTestMode }) {
     const lines = String(code || "").replace(/\r\n/g, "\n").split("\n");
     const env = {};
     let output = "";
+    let stopped = false;
     const steps = [{
       line: -1,
       vars: {},
@@ -923,34 +1021,217 @@ async function executePython(rawCode, { onOutput, onInput, isTestMode }) {
       return inputs[inputIdx++];
     }
 
-    for (let i = 0; i < lines.length; i++) {
-      const raw = lines[i];
-      const clean = stripCommentLine(raw).trim();
-      if (!clean) {
-        steps.push({
-          line: i,
-          vars: snapshotEnv(env),
-          output: output,
-          note: raw.trim().charAt(0) === "#"
-            ? "Это комментарий. Python его пропускает."
-            : "Пустая строка. Идём дальше."
-        });
-        continue;
-      }
-      try {
-        const note = execTraceLine(clean, env, readInput, function (chunk) { output += chunk; });
-        steps.push({ line: i, vars: snapshotEnv(env), output: output, note: note });
-      } catch (err) {
-        steps.push({
-          line: i,
-          vars: snapshotEnv(env),
-          output: output,
-          error: translatePythonError(err),
-          note: "На этой строке программа остановилась."
-        });
-        break;
-      }
+    function pushStep(line, note, error) {
+      const step = { line: line, vars: snapshotEnv(env), output: output, note: note };
+      if (error) step.error = error;
+      steps.push(step);
     }
+
+    function fail(line, err) {
+      pushStep(line, "На этой строке программа остановилась.", translatePythonError(err));
+      stopped = true;
+      return lines.length;
+    }
+
+    function blankNote(raw) {
+      return raw.trim().charAt(0) === "#"
+        ? "Это комментарий. Python его пропускает."
+        : "Пустая строка. Идём дальше.";
+    }
+
+    function skipBody(index, headerIndent) {
+      let i = index;
+      while (i < lines.length) {
+        const clean = stripCommentLine(lines[i]).trim();
+        if (!clean) { i += 1; continue; }
+        if (indentUnits(lines[i]) <= headerIndent) return i;
+        i += 1;
+      }
+      return i;
+    }
+
+    function rangeValues(args) {
+      function asInt(value) {
+        if (typeof value === "number" && Number.isInteger(value)) return value;
+        throw new Error("TypeError: range() принимает только целые числа");
+      }
+      let start = 0;
+      let stop = 0;
+      let step = 1;
+      if (args.length === 1) stop = asInt(args[0]);
+      else if (args.length === 2) { start = asInt(args[0]); stop = asInt(args[1]); }
+      else if (args.length === 3) { start = asInt(args[0]); stop = asInt(args[1]); step = asInt(args[2]); }
+      else throw new Error("SyntaxError: у range() один, два или три аргумента");
+      if (step === 0) throw new Error("ValueError: шаг range() не может быть нулём");
+      const seq = [];
+      if (step > 0) {
+        for (let value = start; value < stop && seq.length < 41; value += step) seq.push(value);
+      } else {
+        for (let value = start; value > stop && seq.length < 41; value += step) seq.push(value);
+      }
+      return seq;
+    }
+
+    function runFor(start) {
+      const headerIndent = indentUnits(lines[start]);
+      const clean = stripCommentLine(lines[start]).trim();
+      const match = clean.match(/^for\s+([A-Za-z_]\w*)\s+in\s+range\s*\(([\s\S]*)\)\s*:\s*$/);
+      if (!match) return fail(start, new Error("SyntaxError: нужен цикл for i in range(...):"));
+      const varName = match[1];
+      let seq;
+      try {
+        const args = match[2].trim() ? splitTopComma(match[2]).map(function (part) {
+          return evalExprSync(part, env, readInput);
+        }) : [];
+        seq = rangeValues(args);
+      } catch (err) {
+        return fail(start, err);
+      }
+      if (seq.length >= 41) {
+        return fail(start, new Error("TimeLimitError: слишком много кругов для пошагового просмотра"));
+      }
+      if (!seq.length) {
+        pushStep(start, "range пустой: последняя граница не входит, кругов нет.");
+        return skipBody(start + 1, headerIndent);
+      }
+      for (let lap = 0; lap < seq.length && !stopped; lap++) {
+        env[varName] = seq[lap];
+        const border = lap === 0 ? " Последнее число range в круг не входит." : "";
+        pushStep(start, "Круг " + (lap + 1) + " из " + seq.length + ": " + varName + " = " + formatPy(seq[lap]) + "." + border);
+        runFrom(start + 1, headerIndent + 1);
+      }
+      return skipBody(start + 1, headerIndent);
+    }
+
+    function runWhile(start) {
+      const headerIndent = indentUnits(lines[start]);
+      const clean = stripCommentLine(lines[start]).trim();
+      const match = clean.match(/^while\s+([\s\S]+):\s*$/);
+      if (!match) return fail(start, new Error("SyntaxError: после while нужно условие и двоеточие"));
+      const cond = match[1].trim();
+      let lap = 0;
+      while (!stopped) {
+        let ok = false;
+        try {
+          ok = truthy(evalExprSync(cond, env, readInput));
+        } catch (err) {
+          return fail(start, err);
+        }
+        if (!ok) {
+          pushStep(start, "Проверяем while: " + cond + " → нет, цикл закончился.");
+          return skipBody(start + 1, headerIndent);
+        }
+        lap += 1;
+        if (lap > 30) {
+          return fail(start, new Error("TimeLimitError: бесконечный цикл"));
+        }
+        pushStep(start, "Проверяем while: " + cond + " → да, круг " + lap + ".");
+        runFrom(start + 1, headerIndent + 1);
+      }
+      return skipBody(start + 1, headerIndent);
+    }
+
+    function runFrom(index, parentIndent) {
+      let i = index;
+      while (i < lines.length && !stopped) {
+        const raw = lines[i];
+        const clean = stripCommentLine(raw).trim();
+        if (!clean) {
+          pushStep(i, blankNote(raw));
+          i += 1;
+          continue;
+        }
+        const ind = indentUnits(raw);
+        if (ind < parentIndent) return i;
+        if (ind > parentIndent) return fail(i, new Error("IndentationError: unexpected indent"));
+        if (/^if\b/.test(clean)) {
+          i = runChain(i);
+          continue;
+        }
+        if (/^for\b/.test(clean)) {
+          i = runFor(i);
+          continue;
+        }
+        if (/^while\b/.test(clean)) {
+          i = runWhile(i);
+          continue;
+        }
+        if (/^(elif|else)\b/.test(clean)) {
+          return fail(i, new Error("SyntaxError: elif или else без if"));
+        }
+        try {
+          const note = execTraceLine(clean, env, readInput, function (chunk) { output += chunk; });
+          pushStep(i, note);
+        } catch (err) {
+          return fail(i, err);
+        }
+        i += 1;
+      }
+      return i;
+    }
+
+    function runChain(start) {
+      const headerIndent = indentUnits(lines[start]);
+      let i = start;
+      let taken = false;
+      let expectIf = true;
+      while (i < lines.length && !stopped) {
+        const raw = lines[i];
+        const clean = stripCommentLine(raw).trim();
+        if (!clean) {
+          pushStep(i, blankNote(raw));
+          i += 1;
+          continue;
+        }
+        const ind = indentUnits(raw);
+        if (ind < headerIndent) return i;
+        if (ind > headerIndent) return fail(i, new Error("IndentationError: unexpected indent"));
+        let clause;
+        try {
+          clause = parseClause(clean);
+        } catch (err) {
+          return fail(i, err);
+        }
+        if (!clause) return i;
+        if (expectIf && clause.kind !== "if") return fail(i, new Error("SyntaxError: elif или else без if"));
+        if (!expectIf && clause.kind === "if") return i;
+        expectIf = false;
+
+        let enter = false;
+        let note = "";
+        if (taken) {
+          note = clause.kind === "else"
+            ? "Else пропускаем: ветка выше уже выбрана."
+            : "Эту проверку пропускаем: ветка выше уже выбрана.";
+        } else if (clause.kind === "else") {
+          enter = true;
+          note = "Ни одно условие выше не сработало. Заходим в else.";
+        } else {
+          let value = false;
+          try {
+            value = truthy(evalExprSync(clause.cond, env, readInput));
+          } catch (err) {
+            return fail(i, err);
+          }
+          enter = value;
+          const label = clause.kind === "if" ? "if" : "elif";
+          note = value
+            ? "Проверяем " + label + ": " + clause.cond + " → да, заходим в эту ветку."
+            : "Проверяем " + label + ": " + clause.cond + " → нет, идём дальше.";
+        }
+        pushStep(i, note);
+        i += 1;
+        if (enter) {
+          taken = true;
+          i = runFrom(i, headerIndent + 1);
+        } else {
+          i = skipBody(i, headerIndent);
+        }
+      }
+      return i;
+    }
+
+    runFrom(0, 0);
     return { lines: lines, steps: steps };
   }
 

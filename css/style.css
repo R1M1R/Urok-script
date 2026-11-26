@@ -1213,8 +1213,8 @@
 
     .icon-btn {
       flex: 0 0 auto;
-      width: 36px;
-      height: 36px;
+      width: 44px;
+      height: 44px;
       border-radius: 9px;
       border: 1px solid #334155;
       background: #1e293b;
@@ -1276,7 +1276,9 @@
       padding: 8px;
     }
 
-    .tracer-controls .btn { flex: 1; padding: 8px 6px; font-size: 13px; }
+    .tracer-controls .btn { flex: 1; min-height: 44px; padding: 10px 6px; font-size: 13px; }
+
+    .sym-btn { min-height: 36px; }
 
     .tracer-vars {
       width: calc(100% - 16px);
@@ -1357,6 +1359,14 @@
     .soon-card p { margin: 0; color: var(--text-muted); }
 
     .teacher-actions { display: flex; flex-direction: column; gap: 8px; }
+
+    .flow {
+      width: 100%;
+      max-width: 360px;
+      height: auto;
+      display: block;
+      margin: 10px auto;
+    }
     .pin-error { color: #991b1b; font-size: 13px; font-weight: 700; min-height: 1.2em; margin: 0 0 8px; }
 
     #symbolWrap {

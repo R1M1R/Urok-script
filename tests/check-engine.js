@@ -102,6 +102,40 @@ const commented = E.buildTrace('# секрет\nprint("Готово")');
 assert(commented.steps[1].note.includes("комментарий"), "comment note");
 assert(commented.steps[2].output === "Готово\n", "comment skipped");
 
+assert(E.linesEqual("Чётное", "четное", { ignoreCase: true }), "ignore case and yo");
+assert(!E.linesEqual("Чётное", "Нечётное", { ignoreCase: true }), "different words");
+
+const branch = E.buildTrace('score = 75\nif score >= 90:\n    print("5")\nelif score >= 60:\n    print("4")\nelse:\n    print("ещё")');
+const notes = branch.steps.map((s) => s.note).join(" | ");
+assert(notes.includes("нет, идём дальше"), "if false: " + notes);
+assert(notes.includes("да, заходим"), "elif taken: " + notes);
+assert(notes.includes("Else пропускаем"), "else skipped: " + notes);
+assert(branch.steps[branch.steps.length - 1].output === "4\n", "branch output " + JSON.stringify(branch.steps));
+
+const high = E.buildTrace('score = 95\nif score >= 90:\n    print("5")\nelif score >= 60:\n    print("4")\nelse:\n    print("ещё")');
+assert(high.steps[high.steps.length - 1].output === "5\n", "high score branch");
+assert(high.steps.map((s) => s.note).join(" | ").includes("пропускаем"), "later branches skipped");
+
+const gate = E.buildTrace('age = 14\nif age >= 12 and age <= 16:\n    print("да")\nelse:\n    print("нет")');
+assert(gate.steps[gate.steps.length - 1].output === "да\n", "and range " + JSON.stringify(gate.steps.map((s) => s.note)));
+
+const rain = E.buildTrace('rain = True\numbrella = False\nif rain and not umbrella:\n    print("Промокнем")\nelse:\n    print("Сухо")');
+assert(rain.steps[rain.steps.length - 1].output === "Промокнем\n", "not umbrella " + JSON.stringify(rain.steps));
+
+const sumLoop = E.buildTrace("s = 0\nfor i in range(1, 5):\n    s = s + i\nprint(s)");
+const sumNotes = sumLoop.steps.map((s) => s.note + " i=" + (s.vars.i || "-") + " s=" + (s.vars.s || "-")).join(" | ");
+assert(sumLoop.steps.some((s) => s.vars.i === "1" && s.vars.s === "0"), "for sets i before body: " + sumNotes);
+assert(sumLoop.steps.some((s) => s.vars.i === "4" && s.vars.s === "10"), "for last lap s=10: " + sumNotes);
+assert(sumLoop.steps[sumLoop.steps.length - 1].output === "10\n", "for prints total");
+assert(!sumLoop.steps.some((s) => s.vars.i === "5"), "range end excluded");
+
+const countDown = E.buildTrace("n = 3\nwhile n > 0:\n    print(n)\n    n = n - 1\nprint(\"Пуск\")");
+assert(countDown.steps[countDown.steps.length - 1].output === "3\n2\n1\nПуск\n", "countdown " + JSON.stringify(countDown.steps.map((s) => s.output)));
+assert(countDown.steps.some((s) => s.note.indexOf("цикл закончился") !== -1), "while stops");
+
+const spin = E.buildTrace("x = 1\nwhile x < 5:\n    print(x)");
+assert(spin.steps.some((s) => s.error && s.error.indexOf("бесконечный") !== -1), "tracer stops infinite while");
+
 const f = E.preprocessFStrings('print(f"Возраст: {2030 - year}")');
 assert(f.includes("str(2030 - year)"), "f-string preprocess: " + f);
 
@@ -132,6 +166,11 @@ assert(f.includes("str(2030 - year)"), "f-string preprocess: " + f);
 
   const bad = await E.runTests('Print("Шаг 1 готов")', [{ inputs: [], expectedLines: ["Шаг 1 готов"] }]);
   assert(!bad.ok && bad.kind === "error" && bad.error.indexOf("print") !== -1, "Print name error " + JSON.stringify(bad));
+
+  const started = Date.now();
+  const hung = await E.runTests("while True:\n    pass\n", [{ inputs: [], expectedLines: ["нет"] }]);
+  assert(Date.now() - started < 1500, "fallback while must not hang");
+  assert(!hung.ok, "fallback while is not a successful program");
 
   console.log("engine checks passed");
 })().catch(function (err) {

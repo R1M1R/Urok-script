@@ -55,6 +55,8 @@
     hello: "# Твой первый скрипт на Python\nname = input(\"Как тебя зовут? \")\nprint(\"Привет,\", name + \"!\")\nprint(\"Добро пожаловать в мир кода\")",
     calc: "# Мини-калькулятор\na = int(input(\"Первое число: \"))\nb = int(input(\"Второе число: \"))\nprint(\"Сумма:\", a + b)\nprint(\"Произведение:\", a * b)\nprint(\"Целое деление:\", a // b)\nprint(\"Остаток:\", a % b)",
     quest: "# Мини-анкета 7 класса\nname = input(\"Твоё имя: \")\ngame = input(\"Любимая игра или спорт: \")\nage = int(input(\"Сколько тебе лет? \"))\nprint(\"----------------\")\nprint(name, \"— фанат\", game)\nprint(\"Через 5 лет тебе будет:\", age + 5)",
+    guess: "# Угадай число\nsecret = 7\nprint(\"Я загадал число от 1 до 10\")\nwhile True:\n    guess = int(input(\"Твоя догадка: \"))\n    if guess == secret:\n        print(\"Угадал\")\n        break\n    elif guess < secret:\n        print(\"Больше\")\n    else:\n        print(\"Меньше\")",
+    mathcalc: "# Калькулятор math\nimport math\nprint(\"1 — корень, 2 — степень, 3 — округление вверх\")\nchoice = input(\"Что считаем? \")\nx = float(input(\"Число: \"))\nif choice == \"1\":\n    print(math.sqrt(x))\nelif choice == \"2\":\n    power = float(input(\"Степень: \"))\n    print(math.pow(x, power))\nelse:\n    print(math.ceil(x))",
     clear: ""
   };
 
@@ -650,7 +652,21 @@
     status.className = "pill-status " + (solved ? "done" : "new");
     status.textContent = solved ? "Решена (+25 XP)" : "Не решена";
     document.getElementById("taskTitle").textContent = task.title;
-    document.getElementById("taskDescription").innerHTML = task.desc || "";
+    const description = document.getElementById("taskDescription");
+    description.innerHTML = task.desc || "";
+    if (task.sandboxPreset) {
+      const openSandbox = document.createElement("button");
+      openSandbox.type = "button";
+      openSandbox.className = "btn btn-secondary";
+      openSandbox.style.marginTop = "10px";
+      openSandbox.textContent = "Открыть заготовку в Песочнице";
+      openSandbox.addEventListener("click", function () {
+        loadSandboxPreset(task.sandboxPreset);
+        switchView("sandbox");
+        showToast("Заготовка в песочнице. Запусти и поиграй, потом допиши свою версию в задаче.");
+      });
+      description.appendChild(openSandbox);
+    }
     const hintBox = document.getElementById("hintBox");
     hintBox.classList.remove("show");
     hintBox.textContent = "";
@@ -1131,6 +1147,14 @@
 
   async function checkParsons(task) {
     const layout = getParsonsLayout(task);
+    const assembled = window.PyEngine.assembleParsons(layout);
+    if (typeof task.codeCheck === "function") {
+      const msg = task.codeCheck(assembled);
+      if (msg) {
+        showResult(false, escapeHtml(msg));
+        return;
+      }
+    }
     const structure = window.PyEngine.compareParsons(layout, task.lines || []);
     const mode = task.parsonsMode || "both";
     const hasTests = task.tests && task.tests.length;
@@ -1143,7 +1167,7 @@
       passBanner(task, "Строки стоят правильно, отступы тоже.");
       return;
     }
-    const result = await window.PyEngine.runTests(window.PyEngine.assembleParsons(layout), task.tests);
+    const result = await window.PyEngine.runTests(assembled, task.tests);
     if (result.ok) {
       passBanner(task, "Собранная программа прошла автотесты.");
       return;
@@ -1296,7 +1320,7 @@
           (grade.extraTotal ? " • тренировка " + grade.extraSolved + "/" + grade.extraTotal : "");
       html += "<div style=\"display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 0;" +
         (index < chapters.length - 1 ? "border-bottom:1px solid #f1f5f9;" : "") + "\">" +
-        "<div style=\"min-width:0;\"><div style=\"font-weight:700;\">" + (index + 1) + ". " + escapeHtml(ch.title) + "</div>" +
+        "<div style=\"min-width:0;\"><div style=\"font-weight:700;\">Гл." + (index + 1) + ". " + escapeHtml(ch.title) + "</div>" +
         "<div style=\"font-size:12px;color:var(--text-muted);\">" + escapeHtml(detail) + "</div></div>" +
         "<span class=\"mini-grade " + (grade.cls || "") + "\">" + escapeHtml(mark) + "</span></div>";
     });
@@ -1330,7 +1354,7 @@
     const code = computeVerificationCode(state.studentName, state.studentClass, stats.solvedTasks, stats.solvedQuizzes, stats.xp, marks);
     const lines = getChapters().map(function (ch, index) {
       const grade = finalGrade.grades[index];
-      return "• Глава " + (index + 1) + " (" + ch.title + "): " + (isChapterUnlocked(index) ? grade.grade : "закрыта");
+      return "• Гл." + (index + 1) + " (" + ch.title + "): " + (isChapterUnlocked(index) ? grade.grade : "закрыта");
     });
     return [
       "ПайтонЛаб 7 — отчёт ученика",
@@ -1345,17 +1369,25 @@
 
   function copyReportText() {
     const text = reportPlainText();
+    const fallback = function () {
+      const tmp = document.createElement("textarea");
+      tmp.value = text;
+      tmp.setAttribute("readonly", "readonly");
+      tmp.style.position = "fixed";
+      tmp.style.left = "-9999px";
+      document.body.appendChild(tmp);
+      tmp.select();
+      document.execCommand("copy");
+      document.body.removeChild(tmp);
+      showToast("Отчёт скопирован");
+    };
     if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(text).then(function () { showToast("Отчёт скопирован"); });
+      navigator.clipboard.writeText(text).then(function () {
+        showToast("Отчёт скопирован");
+      }).catch(fallback);
       return;
     }
-    const tmp = document.createElement("textarea");
-    tmp.value = text;
-    document.body.appendChild(tmp);
-    tmp.select();
-    document.execCommand("copy");
-    document.body.removeChild(tmp);
-    showToast("Отчёт скопирован");
+    fallback();
   }
 
   async function sendToGoogleSheet() {
